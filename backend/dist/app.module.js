@@ -20,6 +20,7 @@ const orders_module_1 = require("./modules/orders/orders.module");
 const subscriptions_module_1 = require("./modules/subscriptions/subscriptions.module");
 const payments_module_1 = require("./modules/payments/payments.module");
 const platform_module_1 = require("./modules/platform/platform.module");
+const health_module_1 = require("./modules/health/health.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -50,6 +51,7 @@ exports.AppModule = AppModule = __decorate([
             subscriptions_module_1.SubscriptionsModule,
             payments_module_1.PaymentsModule,
             platform_module_1.PlatformModule,
+            health_module_1.HealthModule,
         ],
         controllers: [],
         providers: [],
