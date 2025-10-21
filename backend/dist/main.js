@@ -44,7 +44,7 @@ async function bootstrap() {
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup("api", app, document, {
+    swagger_1.SwaggerModule.setup("docs", app, document, {
         customCss: `
       .topbar { display: none }
       .swagger-ui .topbar { display: none }

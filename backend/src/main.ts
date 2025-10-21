@@ -59,7 +59,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
 
   // Configure Swagger for production - CDN fallback approach
-  SwaggerModule.setup("api", app, document, {
+  SwaggerModule.setup("docs", app, document, {
     customCss: `
       .topbar { display: none }
       .swagger-ui .topbar { display: none }
