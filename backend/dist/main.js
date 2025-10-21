@@ -25,26 +25,26 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
     }));
     const config = new swagger_1.DocumentBuilder()
-        .setTitle('Shopify Shop API')
-        .setDescription('Multi-vendor e-commerce platform API documentation - Universal Access Enabled')
-        .setVersion('1.0')
-        .addTag('auth', 'Authentication and authorization endpoints')
-        .addTag('users', 'User management and profile endpoints')
-        .addTag('shops', 'Shop management and configuration')
-        .addTag('products', 'Product catalog and inventory')
-        .addTag('orders', 'Order processing and management')
-        .addTag('payments', 'Payment processing with Stripe')
-        .addTag('checkout', 'Checkout session management')
-        .addTag('shipping', 'Shipping and delivery management')
-        .addTag('subscriptions', 'Subscription and recurring billing')
-        .addTag('platform', 'Platform administration')
-        .addTag('health', 'Health check and monitoring')
-        .addServer('https://shopify-shop-api.vercel.app', 'Production API server')
-        .addServer('http://localhost:29000', 'Development server')
+        .setTitle("Shopify Shop API")
+        .setDescription("Multi-vendor e-commerce platform API documentation - Universal Access Enabled")
+        .setVersion("1.0")
+        .addTag("auth", "Authentication and authorization endpoints")
+        .addTag("users", "User management and profile endpoints")
+        .addTag("shops", "Shop management and configuration")
+        .addTag("products", "Product catalog and inventory")
+        .addTag("orders", "Order processing and management")
+        .addTag("payments", "Payment processing with Stripe")
+        .addTag("checkout", "Checkout session management")
+        .addTag("shipping", "Shipping and delivery management")
+        .addTag("subscriptions", "Subscription and recurring billing")
+        .addTag("platform", "Platform administration")
+        .addTag("health", "Health check and monitoring")
+        .addServer("https://shopify-shop-api.vercel.app", "Production API server")
+        .addServer("http://localhost:29000", "Development server")
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('docs', app, document, {
+    swagger_1.SwaggerModule.setup("api", app, document, {
         customCss: `
       .topbar { display: none }
       .swagger-ui .topbar { display: none }
@@ -52,9 +52,9 @@ async function bootstrap() {
       .swagger-ui .info .title { color: #61dafb; font-size: 24px; }
       .swagger-ui .scheme-container { background: #f8f9fa; border-radius: 4px; }
     `,
-        customSiteTitle: 'Shopify Shop API Documentation',
-        customfavIcon: '/favicon.ico',
-        customJs: 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
+        customSiteTitle: "Shopify Shop API Documentation",
+        customfavIcon: "/favicon.ico",
+        customJs: "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
         customJsStr: `
       // Load Swagger UI from CDN if local assets fail
       window.onload = function() {
@@ -75,12 +75,12 @@ async function bootstrap() {
         swaggerOptions: {
             persistAuthorization: true,
             displayRequestDuration: true,
-            docExpansion: 'none',
+            docExpansion: "none",
             filter: true,
             showExtensions: true,
             showCommonExtensions: true,
             tryItOutEnabled: true,
-            supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+            supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
             deepLinking: true,
             defaultModelsExpandDepth: 1,
             defaultModelExpandDepth: 1,
@@ -94,7 +94,7 @@ async function bootstrap() {
             responseInterceptor: function (response) {
                 console.log("📥 API Response:", response);
                 return response;
-            }
+            },
         },
     });
     const configService = app.get(config_1.ConfigService);
