@@ -21,6 +21,7 @@ const subscriptions_module_1 = require("./modules/subscriptions/subscriptions.mo
 const payments_module_1 = require("./modules/payments/payments.module");
 const platform_module_1 = require("./modules/platform/platform.module");
 const health_module_1 = require("./modules/health/health.module");
+const app_module_1 = require("./modules/app/app.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -52,6 +53,7 @@ exports.AppModule = AppModule = __decorate([
             payments_module_1.PaymentsModule,
             platform_module_1.PlatformModule,
             health_module_1.HealthModule,
+            app_module_1.AppModule,
         ],
         controllers: [],
         providers: [],

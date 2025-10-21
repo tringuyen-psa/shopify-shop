@@ -12,6 +12,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { HealthModule } from './modules/health/health.module';
+import { AppModule as AppControllerModule } from './modules/app/app.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { HealthModule } from './modules/health/health.module';
     PaymentsModule,
     PlatformModule,
     HealthModule,
+    AppControllerModule,
   ],
   controllers: [],
   providers: [],
