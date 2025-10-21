@@ -28,7 +28,7 @@ export type { CheckoutSession, CreateCheckoutSessionRequest } from "./checkout";
 
 // Base API configuration
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://shopify-shop-api.vercel.app/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://shopify-shop-api.vercel.app";
 
 // Common error handler
 export class ApiError extends Error {
