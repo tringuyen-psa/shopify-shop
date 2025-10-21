@@ -9,6 +9,7 @@ export declare class AppController {
         environment: any;
         endpoints: {
             swagger: string;
+            docs_redirect: string;
             auth: {
                 login: string;
                 register: string;
@@ -31,6 +32,7 @@ export declare class AppController {
         documentation: string;
         links: {
             swagger_ui: string;
+            docs_redirect: string;
             api_base: string;
             github: string;
         };
@@ -78,5 +80,8 @@ export declare class AppController {
             swagger: string;
         };
     };
-    getSwaggerDocs(res: any): void;
+    getSwaggerDocsRedirect(): {
+        url: string;
+        statusCode: number;
+    };
 }

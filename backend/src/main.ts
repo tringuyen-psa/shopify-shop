@@ -58,22 +58,15 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Configure Swagger for production - CDN fallback approach
-  SwaggerModule.setup("docs", app, document, {
+  // Configure Swagger for production - Simple setup for Vercel compatibility
+  SwaggerModule.setup("api-docs", app, document, {
     customCss: `
-      .topbar { display: none }
-      .swagger-ui .topbar { display: none }
-      .information-container { display: none }
-      .swagger-ui .info .title { color: #61dafb; font-size: 24px; }
-      .swagger-ui .scheme-container { background: #f8f9fa; border-radius: 4px; }
+      .topbar { display: none !important; }
+      .swagger-ui .topbar { display: none !important; }
+      .information-container { display: none !important; }
+      .swagger-ui .info .title { color: #61dafb !important; font-size: 24px; }
+      .swagger-ui .scheme-container { background: #f8f9fa !important; border-radius: 4px; }
       .swagger-ui .info { margin-bottom: 20px; }
-      .loading-container {
-        text-align: center;
-        padding: 50px;
-        font-size: 18px;
-        color: #666;
-        display: none;
-      }
     `,
     customSiteTitle: "Shopify Shop API Documentation",
     customfavIcon: "/favicon.ico",
