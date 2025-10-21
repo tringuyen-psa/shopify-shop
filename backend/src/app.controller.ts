@@ -1,6 +1,6 @@
-import { Controller, Get, Res, Redirect } from "@nestjs/common";
+import { Controller, Get, Res } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { Response as ExpressResponse } from "express";
+import { Response as ExpressResponse } from "express-serve-static-core";
 import { ConfigService } from "@nestjs/config";
 
 @ApiTags("app")
@@ -228,21 +228,68 @@ export class AppController {
   }
 
   @Get("docs")
-  @Redirect()
   @ApiOperation({
-    summary: "Redirect to main Swagger documentation",
+    summary: "Alternative Swagger documentation with CDN fallback",
   })
   @ApiResponse({
-    status: 302,
-    description: "Redirect to API documentation",
+    status: 200,
+    description: "Standalone Swagger documentation page with CDN fallback",
   })
-  getSwaggerDocsRedirect() {
+  getSwaggerDocs(@Res() res: ExpressResponse) {
     const nodeEnv = this.configService.get("NODE_ENV") || "development";
     const baseUrl =
       nodeEnv === "production"
         ? "https://shopify-shop-api.vercel.app"
         : `http://localhost:${this.configService.get("PORT") || 29000}`;
 
-    return { url: `${baseUrl}/api-docs`, statusCode: 302 };
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shopify Shop API Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin:0; background: #fafafa; }
+        .swagger-ui .topbar { display: none }
+        .information-container { display: none }
+        .swagger-ui .info .title { color: #61dafb !important; font-size: 24px; }
+        .swagger-ui .scheme-container { background: #f8f9fa !important; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: '${baseUrl}/api-docs-json',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                persistAuthorization: true,
+                displayRequestDuration: true,
+                docExpansion: "none",
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: ${nodeEnv !== "production"},
+            });
+        };
+    </script>
+</body>
+</html>`;
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
   }
 }
