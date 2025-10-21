@@ -58,52 +58,23 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Configure Swagger for production
+  // Configure Swagger UI - Simple setup for localhost and production
   SwaggerModule.setup("docs", app, document, {
-    customCss: `
-      .topbar { display: none }
-      .swagger-ui .topbar { display: none }
-      .information-container { display: none }
-      .swagger-ui .info .title { color: #61dafb; }
-      .swagger-ui .scheme-container { background: #f7f7f7; }
-    `,
     customSiteTitle: "Shopify Shop API Documentation",
-    customfavIcon: "/favicon.ico",
-    customJs: "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
-    customJsStr: `
-      // Load Swagger UI from CDN if local assets fail
-      window.onload = function() {
-        console.log("Swagger UI loaded with CDN fallback");
-        if (!window.SwaggerUIBundle) {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js';
-          document.head.appendChild(script);
-
-          const css = document.createElement('link');
-          css.rel = 'stylesheet';
-          css.href = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css';
-          document.head.appendChild(css);
-        }
-      };
+    customCss: `
+      .swagger-ui .topbar { display: none; }
+      .swagger-ui .info .title { color: #61dafb; }
     `,
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,
-      docExpansion: "none",
+      docExpansion: "list",
       filter: true,
       showExtensions: true,
       showCommonExtensions: true,
       tryItOutEnabled: true,
-      supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
-      onComplete: function() {
-        console.log("Swagger UI loaded successfully");
-      },
-      requestInterceptor: function(request: any) {
-        return request;
-      },
-      responseInterceptor: function(response: any) {
-        return response;
-      }
+      supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
+      deepLinking: true,
     },
   });
 
