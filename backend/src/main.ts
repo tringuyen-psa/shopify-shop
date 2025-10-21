@@ -3,9 +3,14 @@ import { ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
+import { join } from "path";
+import { NestExpressApplication } from "@nestjs/platform-express";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Set global prefix for API routes - removed as user wants direct routes
+  // app.setGlobalPrefix('api');
 
   // Enable CORS
   app.enableCors({
@@ -36,7 +41,7 @@ async function bootstrap() {
     .setDescription("Multi-vendor e-commerce platform API documentation")
     .setVersion("1.0")
     .addServer("http://localhost:29000", "Development server")
-    .addServer("https://shopify-shop-api.vercel.app/", "Production server")
+    .addServer("https://shopify-shop-api.vercel.app", "Production server")
     .addTag("auth")
     .addTag("users")
     .addTag("shops")

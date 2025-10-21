@@ -29,7 +29,7 @@ async function bootstrap() {
         .setDescription("Multi-vendor e-commerce platform API documentation")
         .setVersion("1.0")
         .addServer("http://localhost:29000", "Development server")
-        .addServer("https://shopify-shop-api.vercel.app/", "Production server")
+        .addServer("https://shopify-shop-api.vercel.app", "Production server")
         .addTag("auth")
         .addTag("users")
         .addTag("shops")

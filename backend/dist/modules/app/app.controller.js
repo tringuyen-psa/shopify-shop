@@ -31,17 +31,17 @@ let AppController = class AppController {
                 health: '/health',
                 detailed_health: '/health/detailed',
                 swagger_docs: '/docs',
-                api_base: '/api',
+                api_base: '/',
                 auth: {
-                    login: '/api/auth/login',
-                    register: '/api/auth/register',
-                    refresh: '/api/auth/refresh'
+                    login: '/auth/login',
+                    register: '/auth/register',
+                    refresh: '/auth/refresh'
                 },
-                shops: '/api/shops',
-                products: '/api/products',
-                orders: '/api/orders',
-                payments: '/api/payments',
-                checkout: '/api/checkout'
+                shops: '/shops',
+                products: '/products',
+                orders: '/orders',
+                payments: '/payments',
+                checkout: '/checkout'
             },
             links: {
                 swagger_ui: '/docs',
@@ -62,7 +62,7 @@ let AppController = class AppController {
             environment: nodeEnv,
             status: 'active',
             documentation: '/docs',
-            base_path: '/api',
+            base_path: '/',
             timestamp: currentTime,
             message: 'Use /docs for interactive API documentation'
         };
