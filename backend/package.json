@@ -11,7 +11,7 @@
   "scripts": {
     "build": "nest build",
     "build:prod": "npm run build",
-    "prebuild": "npm install",
+    "build:full": "npm install && yarn install && yarn start:dev",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

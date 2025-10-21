@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
-import 'express-serve-static-core';
+import { Request } from 'express';
 
 export interface UploadedFile {
   id: string;

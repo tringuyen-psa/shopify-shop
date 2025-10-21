@@ -16,7 +16,6 @@ const config_1 = require("@nestjs/config");
 const uuid_1 = require("uuid");
 const path = require("path");
 const fs = require("fs");
-require("express-serve-static-core");
 let UploadsService = UploadsService_1 = class UploadsService {
     constructor(configService) {
         this.configService = configService;

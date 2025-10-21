@@ -17,7 +17,6 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const bcrypt = require("bcrypt");
-require("express-serve-static-core");
 const uuid_1 = require("uuid");
 const user_entity_1 = require("./entities/user.entity");
 const shop_entity_1 = require("../shops/entities/shop.entity");

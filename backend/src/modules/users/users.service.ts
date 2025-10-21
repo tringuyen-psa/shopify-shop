@@ -8,7 +8,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import 'express-serve-static-core';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from './entities/user.entity';
 import { Shop } from '../shops/entities/shop.entity';
