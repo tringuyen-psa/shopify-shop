@@ -1,0 +1,38 @@
+import { Product } from '../../products/entities/product.entity';
+import { Shop } from '../../shops/entities/shop.entity';
+import { ShippingRate } from '../../shipping/entities/shipping-rate.entity';
+import { Order } from '../../orders/entities/order.entity';
+export declare class CheckoutSession {
+    id: string;
+    sessionId: string;
+    product: Product;
+    productId: string;
+    shop: Shop;
+    shopId: string;
+    shippingRate: ShippingRate;
+    shippingRateId: string;
+    email: string;
+    customerName: string;
+    phone: string;
+    shippingAddressLine1: string;
+    shippingAddressLine2: string;
+    shippingCity: string;
+    shippingState: string;
+    shippingCountry: string;
+    shippingPostalCode: string;
+    shippingMethodName: string;
+    shippingCost: number;
+    customerNote: string;
+    billingCycle: 'one_time' | 'weekly' | 'monthly' | 'yearly';
+    productPrice: number;
+    totalAmount: number;
+    discountAmount: number;
+    stripeCheckoutSessionId: string;
+    paymentIntentId: string;
+    currentStep: number;
+    status: 'pending' | 'completed' | 'expired' | 'abandoned';
+    expiresAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    orders: Order[];
+}
