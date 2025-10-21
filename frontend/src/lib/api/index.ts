@@ -2,7 +2,7 @@
 export { authApi } from "./auth";
 export type { User, AuthResponse } from "./auth";
 export { shopsApi } from "./shops";
-export type { Shop, CreateShopRequest, UpdateShopRequest } from "./shops";
+export type { Shop, CreateShopRequest, UpdateShopRequest, ShopsQueryParams } from "./shops";
 export { productsAPI as productsApi } from "./products";
 export type {
   Product,

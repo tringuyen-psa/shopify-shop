@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:29000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:29000';
 
 export interface Product {
   id: string;
@@ -110,6 +110,17 @@ class ProductsAPI {
   async getProductById(id: string): Promise<Product> {
     try {
       const response = await axios.get(`${API_BASE_URL}/products/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
+    }
+  }
+
+  // Get product by slug (public)
+  async getProductBySlug(productSlug: string): Promise<Product> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/products/slug/${productSlug}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching product:', error);

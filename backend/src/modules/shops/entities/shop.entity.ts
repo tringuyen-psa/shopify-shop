@@ -119,4 +119,44 @@ export class Shop {
 
   @OneToMany(() => ShippingZone, zone => zone.shop)
   shippingZones: ShippingZone[];
+
+  // Subscription plan fields
+  @Column({
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+    default: null,
+  })
+  subscriptionPlan: 'basic' | 'shopify' | 'advanced' | 'shopify_plus' | null;
+
+  @Column({
+    type: 'decimal',
+    precision: 8,
+    scale: 2,
+    nullable: true,
+  })
+  subscriptionPrice: number;
+
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  subscriptionPeriod: string; // 'monthly', 'yearly'
+
+  @Column({ type: 'date', nullable: true })
+  subscriptionStartsAt: Date;
+
+  @Column({ type: 'date', nullable: true })
+  subscriptionEndsAt: Date;
+
+  @Column({ default: false })
+  subscriptionActive: boolean;
+
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  stripeSubscriptionId: string;
 }

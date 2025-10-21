@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRequireAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ordersApi, Order } from '@/lib/api/orders';
@@ -32,10 +33,14 @@ export default function CustomerDashboard() {
       const ordersResponse = await ordersApi.getMyOrders({ limit: 5 });
       const subscriptionsResponse = await subscriptionsApi.getMySubscriptions({ limit: 5 });
 
-      setOrders(ordersResponse.orders);
-      setSubscriptions(subscriptionsResponse.subscriptions);
+      // Ensure arrays are properly initialized
+      setOrders(Array.isArray(ordersResponse?.orders) ? ordersResponse.orders : []);
+      setSubscriptions(Array.isArray(subscriptionsResponse?.subscriptions) ? subscriptionsResponse.subscriptions : []);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
+      // Set empty arrays on error to prevent undefined issues
+      setOrders([]);
+      setSubscriptions([]);
     } finally {
       setLoading(false);
     }
@@ -109,9 +114,9 @@ export default function CustomerDashboard() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{orders.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(orders) ? orders.length : 0}</div>
             <p className="text-xs text-muted-foreground">
-              {orders.filter(o => o.fulfillmentStatus === 'delivered').length} delivered
+              {Array.isArray(orders) ? orders.filter(o => o.fulfillmentStatus === 'delivered').length : 0} delivered
             </p>
           </CardContent>
         </Card>
@@ -122,9 +127,9 @@ export default function CustomerDashboard() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{subscriptions.length}</div>
+            <div className="text-2xl font-bold">{Array.isArray(subscriptions) ? subscriptions.length : 0}</div>
             <p className="text-xs text-muted-foreground">
-              ${subscriptions.reduce((sum, sub) => sum + sub.amount, 0).toFixed(2)}/month
+              ${Array.isArray(subscriptions) ? subscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0).toFixed(2) : '0.00'}/month
             </p>
           </CardContent>
         </Card>
@@ -136,7 +141,7 @@ export default function CustomerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(2)}
+              ${Array.isArray(orders) ? orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0).toFixed(2) : '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">
               All time purchases
@@ -151,7 +156,7 @@ export default function CustomerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {orders.filter(o => o.fulfillmentStatus === 'unfulfilled' || o.fulfillmentStatus === 'shipped').length}
+              {Array.isArray(orders) ? orders.filter(o => o.fulfillmentStatus === 'unfulfilled' || o.fulfillmentStatus === 'shipped').length : 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Awaiting delivery
@@ -166,16 +171,18 @@ export default function CustomerDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Recent Orders
-              <Button variant="outline" size="sm">
-                View All
-              </Button>
+              <Link href="/dashboard/customer/orders">
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
+              </Link>
             </CardTitle>
             <CardDescription>
               Your latest purchase history
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {orders.length === 0 ? (
+            {!Array.isArray(orders) || orders.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>No orders yet</p>
@@ -210,16 +217,18 @@ export default function CustomerDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Active Subscriptions
-              <Button variant="outline" size="sm">
-                Manage
-              </Button>
+              <Link href="/dashboard/customer/subscriptions">
+                <Button variant="outline" size="sm">
+                  Manage
+                </Button>
+              </Link>
             </CardTitle>
             <CardDescription>
               Your recurring payments
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {subscriptions.length === 0 ? (
+            {!Array.isArray(subscriptions) || subscriptions.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <CreditCard className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>No active subscriptions</p>
@@ -265,18 +274,24 @@ export default function CustomerDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <ShoppingCart className="h-6 w-6" />
-              <span>Browse Shops</span>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <Package className="h-6 w-6" />
-              <span>Track Orders</span>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
-              <CreditCard className="h-6 w-6" />
-              <span>Manage Subscriptions</span>
-            </Button>
+            <Link href="/shops">
+              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+                <ShoppingCart className="h-6 w-6" />
+                <span>Browse Shops</span>
+              </Button>
+            </Link>
+            <Link href="/dashboard/customer/orders">
+              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+                <Package className="h-6 w-6" />
+                <span>Track Orders</span>
+              </Button>
+            </Link>
+            <Link href="/dashboard/customer/subscriptions">
+              <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+                <CreditCard className="h-6 w-6" />
+                <span>Manage Subscriptions</span>
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>

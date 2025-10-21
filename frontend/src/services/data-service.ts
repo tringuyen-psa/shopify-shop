@@ -17,7 +17,8 @@ import {
   Subscription,
   CheckoutSession,
   OrdersQueryParams,
-  FulfillOrderRequest
+  FulfillOrderRequest,
+  ShopsQueryParams
 } from '@/lib/api';
 
 import type { AuthResponse } from '@/lib/api/auth';
@@ -54,6 +55,21 @@ class DataService {
   }
 
   // SHOP DATA SERVICES
+  async getAllShops(params?: ShopsQueryParams): Promise<{
+    shops: Shop[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    try {
+      const shops = await shopsApi.getAllShops(params);
+      return shops;
+    } catch (error) {
+      console.error('Failed to fetch all shops:', error);
+      throw error;
+    }
+  }
+
   async getShopBySlug(slug: string): Promise<Shop> {
     try {
       const shop = await shopsApi.getShopBySlug(slug);
@@ -76,6 +92,7 @@ class DataService {
 
   async createShop(data: CreateShopRequest): Promise<Shop> {
     try {
+      // Backend will auto-generate slug from shop ID
       const shop = await shopsApi.createShop(data);
       return shop;
     } catch (error) {
@@ -96,6 +113,12 @@ class DataService {
 
   async getShopProducts(shopId: string): Promise<Product[]> {
     try {
+      // Handle special case where 'current' means the current user's shop
+      if (shopId === 'current') {
+        const myShop = await this.getMyShop();
+        shopId = myShop.slug; // Use slug instead of ID for backend API
+      }
+
       const products = await shopsApi.getShopProducts(shopId);
       return products as Product[];
     } catch (error) {
@@ -118,6 +141,16 @@ class DataService {
   async getProductById(id: string): Promise<Product> {
     try {
       const product = await productsApi.getProductById(id);
+      return product;
+    } catch (error) {
+      console.error('Failed to fetch product:', error);
+      throw error;
+    }
+  }
+
+  async getProductByShopAndProductSlug(shopSlug: string, productSlug: string): Promise<Product> {
+    try {
+      const product = await productsApi.getProductBySlug(productSlug);
       return product;
     } catch (error) {
       console.error('Failed to fetch product:', error);
@@ -314,6 +347,21 @@ class DataService {
     }
   }
 
+  async getMyOrders(params?: OrdersQueryParams): Promise<{
+    orders: Order[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    try {
+      const orders = await ordersApi.getMyOrders(params);
+      return orders;
+    } catch (error) {
+      console.error('Failed to fetch my orders:', error);
+      throw error;
+    }
+  }
+
   async getOrder(orderNumber: string): Promise<Order> {
     try {
       const order = await ordersApi.getOrder(orderNumber);
@@ -448,5 +496,6 @@ export type {
   Subscription,
   CheckoutSession,
   OrdersQueryParams,
-  FulfillOrderRequest
+  FulfillOrderRequest,
+  ShopsQueryParams
 };

@@ -1,46 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function HomePage() {
-  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b bg-white/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Shopify Clone</h1>
-            </div>
-            <nav className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <span className="text-sm text-gray-600">
-                    Xin chào, {user.name}
-                  </span>
-                  <Link href="/dashboard">
-                    <Button variant="outline">Dashboard</Button>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/login">
-                    <Button variant="ghost">Đăng nhập</Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button>Đăng ký</Button>
-                  </Link>
-                </>
-              )}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">

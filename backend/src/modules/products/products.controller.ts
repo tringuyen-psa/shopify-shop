@@ -30,6 +30,15 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
+  @Get('shops/:shopId')
+  @ApiOperation({ summary: 'Get all products for a specific shop' })
+  @ApiParam({ name: 'shopId', description: 'Shop ID' })
+  @ApiResponse({ status: 200, description: 'Shop products retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Shop not found' })
+  findByShopId(@Param('shopId', ParseUUIDPipe) shopId: string) {
+    return this.productsService.findByShopId(shopId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
   @ApiParam({ name: 'id', description: 'Product ID' })
@@ -37,6 +46,15 @@ export class ProductsController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.productsService.findById(id);
+  }
+
+  @Get('slug/:slug')
+  @ApiOperation({ summary: 'Get product by slug' })
+  @ApiParam({ name: 'slug', description: 'Product slug' })
+  @ApiResponse({ status: 200, description: 'Product retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  findBySlug(@Param('slug') slug: string) {
+    return this.productsService.findBySlug(slug);
   }
 
   @Post('shops/:shopId')
@@ -51,8 +69,9 @@ export class ProductsController {
   create(
     @Body() createProductDto: CreateProductDto,
     @Param('shopId', ParseUUIDPipe) shopId: string,
+    @Request() req,
   ) {
-    return this.productsService.create(createProductDto);
+    return this.productsService.create(createProductDto, shopId);
   }
 
   @Patch(':id')

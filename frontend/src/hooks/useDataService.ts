@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { dataService } from '@/services/data-service';
 import type {
@@ -48,6 +50,20 @@ export function useCurrentUser() {
   return useDataService(() => dataService.getCurrentUser(), []);
 }
 
+export function useAllShops(params?: {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'active' | 'suspended' | 'rejected';
+  search?: string;
+  sortBy?: 'name' | 'createdAt' | 'revenue' | 'orders';
+  sortOrder?: 'asc' | 'desc';
+}) {
+  return useDataService(
+    () => dataService.getAllShops(params),
+    [JSON.stringify(params)]
+  );
+}
+
 export function useShop(shopSlug: string) {
   return useDataService(() => dataService.getShopBySlug(shopSlug), [shopSlug]);
 }
@@ -62,6 +78,10 @@ export function useShopProducts(shopId: string) {
 
 export function useProduct(productId: string) {
   return useDataService(() => dataService.getProductById(productId), [productId]);
+}
+
+export function useProductBySlug(shopSlug: string, productSlug: string) {
+  return useDataService(() => dataService.getProductByShopAndProductSlug(shopSlug, productSlug), [shopSlug, productSlug]);
 }
 
 export function useProducts(filters?: ProductFilters) {
@@ -83,6 +103,24 @@ export function useShopWithProductCount(shopSlug: string) {
     () => dataService.getShopWithProductCount(shopSlug),
     [shopSlug]
   );
+}
+
+export function useMyOrders(params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
+  sortBy?: 'createdAt' | 'totalAmount' | 'orderNumber';
+  sortOrder?: 'asc' | 'desc';
+}) {
+  return useDataService(
+    () => dataService.getMyOrders(params),
+    [JSON.stringify(params)]
+  );
+}
+
+export function useOrder(orderNumber: string) {
+  return useDataService(() => dataService.getOrder(orderNumber), [orderNumber]);
 }
 
 export function useProductSearch() {

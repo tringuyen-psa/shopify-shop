@@ -164,28 +164,73 @@ export class PaymentsService {
   // Stripe Connect
   async createConnectAccount(shopId: string, userId: string) {
     try {
-      const account = await this.stripe.accounts.create({
-        type: 'express',
-        country: 'US',
-        email: 'shop@example.com', // Should get from user/shop data
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_profile: {
-          name: 'Shop Name', // Should get from shop data
-          product_description: 'E-commerce platform shop',
-        },
-        metadata: {
-          shopId,
-          userId,
-        },
+      // Get shop data to populate Stripe account
+      const shop = await this.shopRepository.findOne({
+        where: { id: shopId, ownerId: userId },
+        relations: ['owner'],
       });
+
+      if (!shop) {
+        throw new NotFoundException('Shop not found or access denied');
+      }
+
+      let account;
+
+      // Check if we're in development mode or Stripe Connect is not available
+      const isDevelopmentMode = process.env.NODE_ENV === 'development' ||
+                               !process.env.STRIPE_CONNECT_ENABLED;
+
+      if (isDevelopmentMode) {
+        // Create a mock account for development
+        this.logger.warn(`Creating mock Stripe Connect account for shop ${shopId} in development mode`);
+
+        account = {
+          id: `acct_mock_${shopId.substring(0, 8)}`,
+          charges_enabled: false,
+          payouts_enabled: false,
+          requirements: {
+            currently_due: ['identity_document', 'company_verification'],
+          },
+          metadata: {
+            shopId,
+            userId,
+            isMock: 'true',
+          },
+        } as any;
+
+        this.logger.log(`Created mock Stripe Connect account ${account.id} for shop ${shopId}`);
+      } else {
+        // Create real Stripe Connect account
+        account = await this.stripe.accounts.create({
+          type: 'express',
+          country: 'US',
+          email: shop.email || shop.owner?.email || 'shop@example.com',
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+          business_profile: {
+            name: shop.name,
+            product_description: shop.description || 'E-commerce platform shop',
+            url: shop.website || undefined,
+            support_email: shop.email || shop.owner?.email,
+            support_phone: shop.phone || undefined,
+          },
+          metadata: {
+            shopId,
+            userId,
+          },
+        });
+
+        this.logger.log(`Created Stripe Connect account ${account.id} for shop ${shopId}`);
+      }
 
       // Update shop with Stripe account ID
       await this.shopRepository.update(shopId, {
         stripeAccountId: account.id,
       });
+
+      this.logger.log(`Created Stripe Connect account ${account.id} for shop ${shopId}`);
 
       return account;
     } catch (error) {
@@ -206,12 +251,31 @@ export class PaymentsService {
 
   async createOnboardingLink(accountId: string) {
     try {
+      // Check if this is a mock account
+      const isDevelopmentMode = process.env.NODE_ENV === 'development' ||
+                               !process.env.STRIPE_CONNECT_ENABLED ||
+                               accountId.startsWith('acct_mock_');
+
+      if (isDevelopmentMode) {
+        this.logger.warn(`Creating mock onboarding link for account ${accountId}`);
+
+        const mockUrl = `${this.configService.get('FRONTEND_URL')}/dashboard/shop/onboarding/complete?mock=true`;
+
+        return {
+          url: mockUrl,
+          created: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        } as any;
+      }
+
       const accountLink = await this.stripe.accountLinks.create({
         account: accountId,
-        refresh_url: `${this.configService.get('FRONTEND_URL')}/shop/onboarding/refresh`,
-        return_url: `${this.configService.get('FRONTEND_URL')}/shop/onboarding/complete`,
+        refresh_url: `${this.configService.get('FRONTEND_URL')}/dashboard/shop/onboarding/refresh`,
+        return_url: `${this.configService.get('FRONTEND_URL')}/dashboard/shop/onboarding/complete`,
         type: 'account_onboarding',
       });
+
+      this.logger.log(`Created onboarding link for account ${accountId}`);
 
       return accountLink;
     } catch (error) {
@@ -220,8 +284,101 @@ export class PaymentsService {
     }
   }
 
+  async createKYCLink(accountId: string) {
+    try {
+      // Check if this is a mock account
+      const isDevelopmentMode = process.env.NODE_ENV === 'development' ||
+                               !process.env.STRIPE_CONNECT_ENABLED ||
+                               accountId.startsWith('acct_mock_');
+
+      if (isDevelopmentMode) {
+        this.logger.warn(`Creating mock KYC link for account ${accountId}`);
+
+        const mockUrl = `${this.configService.get('FRONTEND_URL')}/dashboard/shop/kyc/complete?mock=true`;
+
+        return {
+          url: mockUrl,
+          created: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        } as any;
+      }
+
+      // Create a person account link for KYC verification
+      const accountLink = await this.stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: `${this.configService.get('FRONTEND_URL')}/dashboard/shop/kyc/refresh`,
+        return_url: `${this.configService.get('FRONTEND_URL')}/dashboard/shop/kyc/complete`,
+        type: 'account_onboarding',
+      });
+
+      this.logger.log(`Created KYC verification link for account ${accountId}`);
+
+      return accountLink;
+    } catch (error) {
+      this.logger.error(`Failed to create KYC link: ${error.message}`, error);
+      throw new BadRequestException(`Failed to create KYC verification link: ${error.message}`);
+    }
+  }
+
+  async updateAccountStatus(accountId: string): Promise<void> {
+    try {
+      // Check if this is a mock account
+      const isDevelopmentMode = process.env.NODE_ENV === 'development' ||
+                               !process.env.STRIPE_CONNECT_ENABLED ||
+                               accountId.startsWith('acct_mock_');
+
+      let chargesEnabled = false;
+      let payoutsEnabled = false;
+      let onboardingComplete = false;
+
+      if (isDevelopmentMode) {
+        this.logger.warn(`Updating mock account status for ${accountId}`);
+
+        // For mock accounts, simulate a gradual approval process
+        const random = Math.random();
+        chargesEnabled = random > 0.3; // 70% chance of charges enabled
+        payoutsEnabled = random > 0.5; // 50% chance of payouts enabled
+        onboardingComplete = random > 0.4; // 60% chance of complete
+      } else {
+        const account = await this.stripe.accounts.retrieve(accountId);
+        chargesEnabled = account.charges_enabled;
+        payoutsEnabled = account.payouts_enabled;
+        onboardingComplete = account.requirements?.currently_due.length === 0;
+      }
+
+      // Update the shop's Stripe status in database
+      await this.shopRepository.update(
+        { stripeAccountId: accountId },
+        {
+          stripeChargesEnabled: chargesEnabled,
+          stripePayoutsEnabled: payoutsEnabled,
+          stripeOnboardingComplete: onboardingComplete,
+        }
+      );
+
+      this.logger.log(`Updated account status for ${accountId}: charges_enabled=${chargesEnabled}, payouts_enabled=${payoutsEnabled}`);
+    } catch (error) {
+      this.logger.error(`Failed to update account status: ${error.message}`, error);
+      throw new BadRequestException(`Failed to update account status: ${error.message}`);
+    }
+  }
+
   async createDashboardLink(accountId: string) {
     try {
+      // Check if this is a mock account
+      const isDevelopmentMode = process.env.NODE_ENV === 'development' ||
+                               !process.env.STRIPE_CONNECT_ENABLED ||
+                               accountId.startsWith('acct_mock_');
+
+      if (isDevelopmentMode) {
+        this.logger.warn(`Creating mock dashboard link for account ${accountId}`);
+
+        return {
+          url: 'https://dashboard.stripe.com/mock/dashboard',
+          created: new Date().toISOString(),
+        } as any;
+      }
+
       const loginLink = await this.stripe.accounts.createLoginLink(accountId);
       return loginLink;
     } catch (error) {

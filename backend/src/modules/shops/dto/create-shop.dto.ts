@@ -1,4 +1,10 @@
-import { IsString, IsEmail, IsOptional, IsUrl, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsUrl,
+  MinLength
+} from 'class-validator';
 
 export class CreateShopDto {
   @IsString()
@@ -13,7 +19,7 @@ export class CreateShopDto {
   description?: string;
 
   @IsOptional()
-  @IsUrl()
+  @IsUrl({ require_protocol: false }) // Allow URLs without protocol
   logo?: string;
 
   @IsOptional()
@@ -21,6 +27,6 @@ export class CreateShopDto {
   phone?: string;
 
   @IsOptional()
-  @IsUrl()
-  website?: string;
+  @IsString()
+  website?: string; // Simple string validation - no URL requirement
 }

@@ -19,6 +19,14 @@ export interface Shop {
   status: 'pending' | 'active' | 'suspended' | 'rejected';
   createdAt: string;
   updatedAt: string;
+  // Subscription fields
+  subscriptionPlan: 'basic' | 'shopify' | 'advanced' | 'shopify_plus' | null;
+  subscriptionPrice: number;
+  subscriptionPeriod: string;
+  subscriptionStartsAt?: string;
+  subscriptionEndsAt?: string;
+  subscriptionActive: boolean;
+  stripeSubscriptionId?: string;
 }
 
 export interface CreateShopRequest {
@@ -65,6 +73,10 @@ export interface Product {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  sku?: string;
+  shop?: Shop;
+  costPerItem?: number;
+  barcode?: string;
 }
 
 export interface CreateProductRequest {
@@ -91,6 +103,15 @@ export interface CreateProductRequest {
   features: string[];
 }
 
+export interface ShopsQueryParams {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'active' | 'suspended' | 'rejected';
+  search?: string;
+  sortBy?: 'name' | 'createdAt' | 'revenue' | 'orders';
+  sortOrder?: 'asc' | 'desc';
+}
+
 export const shopsApi = {
   // Shop management
   async createShop(data: CreateShopRequest): Promise<Shop> {
@@ -113,14 +134,48 @@ export const shopsApi = {
     return response.data;
   },
 
+  // Public shops listing
+  async getAllShops(params?: ShopsQueryParams): Promise<{
+    shops: Shop[],
+    total: number,
+    page: number,
+    limit: number
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+    const response = await api.get(`/shops?${queryParams.toString()}`);
+    return response.data;
+  },
+
   // Stripe Connect
-  async startOnboarding(shopId: string): Promise<{ onboardingUrl: string }> {
+  async createConnectAccount(shopId: string): Promise<{
+    accountId: string;
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+  }> {
+    const response = await api.post(`/shops/${shopId}/connect/create-account`);
+    return response.data;
+  },
+
+  async startOnboarding(shopId: string): Promise<{ onboardingUrl: string; accountId: string }> {
     const response = await api.post(`/shops/${shopId}/connect/onboard`);
     return response.data;
   },
 
+  async createKYCLink(shopId: string): Promise<{ kycUrl: string; accountId: string }> {
+    const response = await api.post(`/shops/${shopId}/connect/kyc`);
+    return response.data;
+  },
+
   async getConnectStatus(shopId: string): Promise<{
-    stripeAccountId?: string;
+    accountId?: string;
     onboardingComplete: boolean;
     chargesEnabled: boolean;
     payoutsEnabled: boolean;
@@ -135,7 +190,7 @@ export const shopsApi = {
   },
 
   async getDashboardLink(shopId: string): Promise<{ dashboardUrl: string }> {
-    const response = await api.get(`/shops/${shopId}/dashboard`);
+    const response = await api.get(`/shops/${shopId}/connect/dashboard`);
     return response.data;
   },
 
@@ -161,6 +216,49 @@ export const shopsApi = {
 
   async getProduct(productId: string): Promise<Product> {
     const response = await api.get(`/products/${productId}`);
+    return response.data;
+  },
+
+  async getProductBySlug(productSlug: string): Promise<Product> {
+    const response = await api.get(`/products/slug/${productSlug}`);
+    return response.data;
+  },
+
+  // Subscription management
+  async getSubscriptionPlans(): Promise<{
+    plans: Array<{
+      id: string;
+      name: string;
+      price: number;
+      period: string;
+      description: string;
+      features: string[];
+    }>;
+  }> {
+    const response = await api.get('/shops/subscriptions/plans');
+    return response.data;
+  },
+
+  async updateSubscription(shopId: string, data: {
+    plan: 'basic' | 'shopify' | 'advanced' | 'shopify_plus';
+    price: number;
+    period: string;
+    stripeSubscriptionId?: string;
+  }): Promise<{ message: string; shop: Shop }> {
+    // Ensure we only send the fields that are expected by the DTO
+    const requestData = {
+      plan: data.plan,
+      price: data.price,
+      period: data.period,
+      ...(data.stripeSubscriptionId && { stripeSubscriptionId: data.stripeSubscriptionId }),
+    };
+
+    const response = await api.post(`/shops/${shopId}/subscription/update`, requestData);
+    return response.data;
+  },
+
+  async cancelSubscription(shopId: string): Promise<{ message: string; shop: Shop }> {
+    const response = await api.post(`/shops/${shopId}/subscription/cancel`);
     return response.data;
   },
 };

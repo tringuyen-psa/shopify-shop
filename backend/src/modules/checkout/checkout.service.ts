@@ -8,6 +8,7 @@ import { Repository, MoreThan, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { addHours } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import Stripe from 'stripe';
 
 import { CheckoutSession } from './entities/checkout-session.entity';
 import { Product } from '../products/entities/product.entity';
@@ -22,13 +23,19 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 
 @Injectable()
 export class CheckoutService {
+  private stripe: Stripe;
+
   constructor(
     @InjectRepository(CheckoutSession)
     private readonly checkoutSessionRepository: Repository<CheckoutSession>,
     private readonly productsService: ProductsService,
     private readonly shippingService: ShippingService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    this.stripe = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), {
+      apiVersion: '2023-10-16',
+    });
+  }
 
   /**
    * Create a new checkout session
@@ -160,26 +167,89 @@ export class CheckoutService {
    */
   async createPayment(sessionId: string, createPaymentDto: CreatePaymentDto) {
     const session = await this.validateCheckoutSession(sessionId, {
-      relations: ['product', 'shop'],
+      relations: ['product', 'shop', 'shippingRate'],
     });
 
     if (session.currentStep !== 3) {
       throw new BadRequestException('Please complete previous steps first');
     }
 
-    // This will be implemented when we add Stripe integration
-    // For now, return a mock response
-    const mockStripeCheckoutUrl = `https://checkout.stripe.com/pay/cs_mock_${uuidv4()}`;
+    // Calculate total amount
+    const productPrice = this.calculateProductPrice(session.product, session.billingCycle);
+    const shippingCost = session.shippingRate?.price || 0;
+    const platformFee = Math.round(productPrice * 0.15 * 100); // Convert to cents
+    const totalAmount = Math.round((productPrice + shippingCost + platformFee) * 100); // Convert to cents
 
-    // Update session with payment attempt
-    await this.checkoutSessionRepository.update(session.id, {
-      stripeCheckoutSessionId: `cs_mock_${uuidv4()}`,
-    });
+    try {
+      // Create Stripe Checkout Session - simplified version for now
+      const stripeCheckoutSession = await this.stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment', // Simplified to only one-time payments for now
 
-    return {
-      stripeCheckoutUrl: mockStripeCheckoutUrl,
-      paymentMethod: createPaymentDto.paymentMethod,
-    };
+        // Line items
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: session.product.name,
+                description: session.product.description || `Product from ${session.product.shop.name}`,
+                images: session.product.images.slice(0, 1),
+              },
+              unit_amount: Math.round(productPrice * 100),
+            },
+            quantity: 1,
+          },
+          ...(shippingCost > 0 ? [{
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Shipping',
+                description: session.shippingRate?.name || 'Standard Shipping',
+              },
+              unit_amount: Math.round(shippingCost * 100),
+            },
+            quantity: 1,
+          }] : []),
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Platform Fee',
+                description: 'Platform service fee (15%)',
+              },
+              unit_amount: platformFee,
+            },
+            quantity: 1,
+          },
+        ],
+
+        customer_email: session.email,
+        success_url: `${this.configService.get('FRONTEND_URL')}/checkout/success?session_id=${sessionId}`,
+        cancel_url: `${this.configService.get('FRONTEND_URL')}/checkout/cancel?session_id=${sessionId}`,
+
+        metadata: {
+          checkoutSessionId: sessionId,
+          productId: session.product.id,
+          shopId: session.product.shop.id,
+          billingCycle: session.billingCycle,
+        },
+      });
+
+      // Update session with Stripe checkout session ID
+      await this.checkoutSessionRepository.update(session.id, {
+        stripeCheckoutSessionId: stripeCheckoutSession.id,
+      });
+
+      return {
+        stripeCheckoutUrl: stripeCheckoutSession.url,
+        paymentMethod: createPaymentDto.paymentMethod,
+      };
+
+    } catch (error) {
+      console.error('Stripe checkout session creation failed:', error);
+      throw new BadRequestException('Failed to create payment session. Please try again.');
+    }
   }
 
   /**

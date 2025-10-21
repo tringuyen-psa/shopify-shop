@@ -17,7 +17,18 @@ export class ProductsService {
     });
   }
 
-  async create(productData: Partial<Product>): Promise<Product> {
+  async findBySlug(slug: string): Promise<Product> {
+    return this.productRepository.findOne({
+      where: { slug },
+      relations: ['shop'],
+    });
+  }
+
+  async create(productData: Partial<Product>, shopId?: string): Promise<Product> {
+    // If shopId is provided as separate parameter, add it to productData
+    if (shopId) {
+      productData.shopId = shopId;
+    }
     const product = this.productRepository.create(productData);
     return this.productRepository.save(product);
   }
@@ -31,6 +42,17 @@ export class ProductsService {
     return this.productRepository.find({
       relations: ['shop'],
       where: { isActive: true },
+    });
+  }
+
+  async findByShopId(shopId: string): Promise<Product[]> {
+    return this.productRepository.find({
+      where: {
+        shopId,
+        isActive: true
+      },
+      relations: ['shop'],
+      order: { createdAt: 'DESC' },
     });
   }
 }

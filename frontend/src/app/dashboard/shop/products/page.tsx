@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { shopsApi, Product } from '@/lib/api/shops';
+import { useShopProducts, useMutation } from '@/hooks/useDataService';
 import {
   Plus,
   Package,
@@ -19,43 +19,40 @@ import {
 export default function ProductsPage() {
   const { user } = useRequireAuth(['shop_owner', 'platform_admin']);
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Get the user's shop products using the data service hook
+  const { data: products, loading, error, refetch } = useShopProducts(
+    'current' // Get current user's shop products
+  );
+
+  
+  const deleteProductMutation = useMutation(
+    async (productId: string) => {
+      if (!confirm('Are you sure you want to delete this product?')) {
+        throw new Error('User cancelled');
+      }
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+      return response;
+    }
+  );
+
+  // Handle successful deletion
   useEffect(() => {
-    loadProducts();
-  }, []);
-
-  async function loadProducts() {
-    try {
-      // This would be updated to get the actual shop ID
-      const productsData = await shopsApi.getShopProducts('your-shop-id');
-      setProducts(productsData);
-    } catch (error) {
-      console.error('Failed to load products:', error);
-    } finally {
-      setLoading(false);
+    if (!deleteProductMutation.loading && !deleteProductMutation.error && deleteProductMutation.data) {
+      refetch();
     }
-  }
+  }, [deleteProductMutation.loading, deleteProductMutation.error, deleteProductMutation.data, refetch]);
 
-  async function handleDeleteProduct(productId: string) {
-    if (!confirm('Are you sure you want to delete this product?')) {
-      return;
-    }
-
-    try {
-      await shopsApi.deleteProduct(productId);
-      setProducts(products.filter(p => p.id !== productId));
-    } catch (error) {
-      console.error('Failed to delete product:', error);
-    }
-  }
-
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) || [];
 
   if (loading) {
     return (
@@ -71,6 +68,20 @@ export default function ProductsPage() {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="text-center py-12">
+            <h3 className="text-lg font-semibold text-red-600 mb-2">Failed to load products</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={() => refetch()}>Try Again</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -150,7 +161,8 @@ export default function ProductsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteProduct(product.id)}
+                      onClick={() => deleteProductMutation.mutate(product.id)}
+                      disabled={deleteProductMutation.loading}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -171,7 +183,7 @@ export default function ProductsPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold text-green-600">
-                      ${product.basePrice.toFixed(2)}
+                      ${typeof product.basePrice === 'number' ? product.basePrice.toFixed(2) : parseFloat(product.basePrice || '0').toFixed(2)}
                     </span>
                     <span className={`px-2 py-1 text-xs rounded ${
                       product.isActive
@@ -186,9 +198,9 @@ export default function ProductsPage() {
                   {(product.weeklyPrice || product.monthlyPrice || product.yearlyPrice) && (
                     <div className="text-sm text-gray-600">
                       <div>Subscription from: ${Math.min(
-                        product.weeklyPrice || Infinity,
-                        product.monthlyPrice || Infinity,
-                        product.yearlyPrice || Infinity
+                        typeof product.weeklyPrice === 'number' ? product.weeklyPrice : parseFloat(product.weeklyPrice || 'Infinity'),
+                        typeof product.monthlyPrice === 'number' ? product.monthlyPrice : parseFloat(product.monthlyPrice || 'Infinity'),
+                        typeof product.yearlyPrice === 'number' ? product.yearlyPrice : parseFloat(product.yearlyPrice || 'Infinity')
                       ).toFixed(2)}/week</div>
                     </div>
                   )}
@@ -202,7 +214,7 @@ export default function ProductsPage() {
                   {/* Inventory */}
                   {product.trackInventory && (
                     <div className="text-sm text-gray-500">
-                      Stock: {product.inventoryQuantity} units
+                      Stock: {typeof product.inventoryQuantity === 'number' ? product.inventoryQuantity : parseInt(product.inventoryQuantity || '0')} units
                     </div>
                   )}
 
@@ -219,7 +231,9 @@ export default function ProductsPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => router.push(`/shops/${product.shopId}/products/${product.slug}`)}
+                      onClick={() => {
+                        router.push(`/shops/${product.shop?.slug || 'default'}/products/${product.slug || 'no-slug'}`);
+                      }}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       View

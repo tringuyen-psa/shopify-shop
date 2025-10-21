@@ -13,7 +13,8 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Shield
 } from 'lucide-react';
 
 export default function ShopOnboardingPage() {
@@ -72,10 +73,32 @@ export default function ShopOnboardingPage() {
 
     setLoading(true);
     try {
+      // Store shop ID for callback pages
+      localStorage.setItem('currentShopId', shop.id);
+      sessionStorage.setItem('currentShopId', shop.id);
+
       const { onboardingUrl } = await shopsApi.startOnboarding(shop.id);
       window.location.href = onboardingUrl;
     } catch (error: any) {
       alert(error.message || 'Failed to start KYC process');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDirectKYC() {
+    if (!shop) return;
+
+    setLoading(true);
+    try {
+      // Store shop ID for callback pages
+      localStorage.setItem('currentShopId', shop.id);
+      sessionStorage.setItem('currentShopId', shop.id);
+
+      const { kycUrl } = await shopsApi.createKYCLink(shop.id);
+      window.location.href = kycUrl;
+    } catch (error: any) {
+      alert(error.message || 'Failed to create KYC link');
     } finally {
       setLoading(false);
     }
@@ -211,7 +234,7 @@ export default function ShopOnboardingPage() {
                     className="w-full"
                   >
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Continue KYC Process
+                    Continue Onboarding
                   </Button>
                   <Button
                     variant="outline"
@@ -220,6 +243,19 @@ export default function ShopOnboardingPage() {
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Check Status
+                  </Button>
+                </div>
+
+                <div className="border-t pt-4">
+                  <p className="text-sm text-gray-600 mb-3">Or complete specific verification steps:</p>
+                  <Button
+                    onClick={handleDirectKYC}
+                    variant="outline"
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    KYC Verification Only
                   </Button>
                 </div>
               </div>
@@ -232,15 +268,27 @@ export default function ShopOnboardingPage() {
                     We'll guide you through Stripe's secure onboarding process
                   </p>
                 </div>
-                <Button
-                  onClick={handleStartKYC}
-                  disabled={loading}
-                  size="lg"
-                  className="w-full md:w-auto"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  {loading ? 'Redirecting...' : 'Start Payment Setup'}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleStartKYC}
+                    disabled={loading}
+                    size="lg"
+                    className="flex-1"
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    {loading ? 'Redirecting...' : 'Full Onboarding'}
+                  </Button>
+                  <Button
+                    onClick={handleDirectKYC}
+                    disabled={loading}
+                    variant="outline"
+                    size="lg"
+                    className="flex-1"
+                  >
+                    <Shield className="h-4 w-4 mr-2" />
+                    {loading ? 'Redirecting...' : 'KYC Only'}
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
