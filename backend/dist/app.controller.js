@@ -142,7 +142,7 @@ let AppController = class AppController {
 <head>
     <meta charset="UTF-8">
     <title>Shopify Shop API Documentation</title>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css';">
     <link rel="icon" type="image/png" href="https://shopify-shop-api.vercel.app/favicon.ico">
     <style>
         html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
@@ -159,6 +159,22 @@ let AppController = class AppController {
             text-align: center;
             margin-bottom: 20px;
         }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #666;
+        }
+        .error {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #e74c3c;
+            background: #fdf2f2;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            margin: 20px;
+        }
     </style>
 </head>
 <body>
@@ -166,48 +182,142 @@ let AppController = class AppController {
         <h1>🛍️ Shopify Shop API Documentation</h1>
         <p>Multi-vendor E-commerce Platform - Universal Access Enabled</p>
     </div>
-    <div id="swagger-ui"></div>
-    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
-    <script>
-        window.onload = function() {
-            console.log("🚀 Shopify Shop API - Loading Swagger UI from CDN");
 
-            const ui = SwaggerUIBundle({
-                url: '${baseUrl}/docs-json',
-                dom_id: '#swagger-ui',
-                deepLinking: true,
-                presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIStandalonePreset
-                ],
-                plugins: [
-                    SwaggerUIBundle.plugins.DownloadUrl
-                ],
-                layout: "StandaloneLayout",
-                persistAuthorization: true,
-                displayRequestDuration: true,
-                docExpansion: "none",
-                filter: true,
-                showExtensions: true,
-                showCommonExtensions: true,
-                tryItOutEnabled: true,
-                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
-                defaultModelsExpandDepth: 1,
-                defaultModelExpandDepth: 1,
-                onComplete: function() {
-                    console.log("✅ Shopify Shop API - Swagger UI loaded successfully");
-                },
-                requestInterceptor: function(request) {
-                    console.log("📤 API Request:", request);
-                    return request;
-                },
-                responseInterceptor: function(response) {
-                    console.log("📥 API Response:", response);
-                    return response;
+    <div id="loading" class="loading">
+        🚀 Loading Swagger UI...
+        <br><br>
+        <small>If this takes too long, please check the console for errors.</small>
+    </div>
+
+    <div id="error" class="error" style="display: none;">
+        ❌ Failed to load Swagger UI
+        <br><br>
+        <small>Please check your internet connection and refresh the page.</small>
+        <br><br>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: #61dafb; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            🔄 Retry
+        </button>
+    </div>
+
+    <div id="swagger-ui"></div>
+
+    <script>
+        // Load scripts with fallback and error handling
+        function loadScript(src, fallback, callback) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.onload = callback;
+            script.onerror = function() {
+                console.warn('Failed to load script from:', src);
+                if (fallback) {
+                    console.log('Trying fallback:', fallback);
+                    var fallbackScript = document.createElement('script');
+                    fallbackScript.src = fallback;
+                    fallbackScript.onload = callback;
+                    fallbackScript.onerror = function() {
+                        console.error('Failed to load fallback script:', fallback);
+                        showError();
+                    };
+                    document.head.appendChild(fallbackScript);
+                } else {
+                    showError();
                 }
-            });
-        };
+            };
+            document.head.appendChild(script);
+        }
+
+        function showError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            console.error('❌ Shopify Shop API - Failed to load Swagger UI resources');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Start loading scripts
+        console.log("🚀 Shopify Shop API - Starting to load Swagger UI resources");
+
+        // Load bundle first
+        loadScript(
+            'https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js',
+            'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js',
+            function() {
+                console.log("✅ Bundle loaded successfully");
+
+                // Load preset
+                loadScript(
+                    'https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
+                    'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
+                    function() {
+                        console.log("✅ Preset loaded successfully");
+
+                        // Check if SwaggerUIBundle is available
+                        if (typeof SwaggerUIBundle === 'undefined') {
+                            console.error('❌ SwaggerUIBundle not available');
+                            showError();
+                            return;
+                        }
+
+                        // Initialize Swagger UI
+                        try {
+                            console.log("🎯 Initializing Swagger UI");
+                            const ui = SwaggerUIBundle({
+                                url: '${baseUrl}/docs-json',
+                                dom_id: '#swagger-ui',
+                                deepLinking: true,
+                                presets: [
+                                    SwaggerUIBundle.presets.apis,
+                                    SwaggerUIStandalonePreset
+                                ],
+                                plugins: [
+                                    SwaggerUIBundle.plugins.DownloadUrl
+                                ],
+                                layout: "StandaloneLayout",
+                                persistAuthorization: true,
+                                displayRequestDuration: true,
+                                docExpansion: "none",
+                                filter: true,
+                                showExtensions: true,
+                                showCommonExtensions: true,
+                                tryItOutEnabled: true,
+                                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                                defaultModelsExpandDepth: 1,
+                                defaultModelExpandDepth: 1,
+                                onComplete: function() {
+                                    console.log("✅ Shopify Shop API - Swagger UI loaded successfully");
+                                    hideLoading();
+                                },
+                                requestInterceptor: function(request) {
+                                    console.log("📤 API Request:", request);
+                                    return request;
+                                },
+                                responseInterceptor: function(response) {
+                                    console.log("📥 API Response:", response);
+                                    return response;
+                                },
+                                onError: function(error) {
+                                    console.error("❌ Swagger UI Error:", error);
+                                    showError();
+                                }
+                            });
+                        } catch (error) {
+                            console.error("❌ Failed to initialize Swagger UI:", error);
+                            showError();
+                        }
+                    }
+                );
+            }
+        );
+
+        // Add timeout error handling
+        setTimeout(function() {
+            if (document.getElementById('loading').style.display !== 'none') {
+                console.error("❌ Loading timeout - resources may not be available");
+                showError();
+            }
+        }, 15000); // 15 seconds timeout
     </script>
 </body>
 </html>`;

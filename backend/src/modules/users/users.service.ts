@@ -16,6 +16,7 @@ import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { Express } from 'express';
 
 @Injectable()
 export class UsersService {

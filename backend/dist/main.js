@@ -51,27 +51,17 @@ async function bootstrap() {
       .information-container { display: none }
       .swagger-ui .info .title { color: #61dafb; font-size: 24px; }
       .swagger-ui .scheme-container { background: #f8f9fa; border-radius: 4px; }
+      .swagger-ui .info { margin-bottom: 20px; }
+      .loading-container {
+        text-align: center;
+        padding: 50px;
+        font-size: 18px;
+        color: #666;
+        display: none;
+      }
     `,
         customSiteTitle: "Shopify Shop API Documentation",
         customfavIcon: "/favicon.ico",
-        customJs: "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
-        customJsStr: `
-      // Load Swagger UI from CDN if local assets fail
-      window.onload = function() {
-        console.log("🚀 Shopify Shop API - Swagger UI loading with CDN fallback");
-        if (!window.SwaggerUIBundle) {
-          console.log("🔄 Loading Swagger UI from backup CDN");
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js';
-          document.head.appendChild(script);
-
-          const css = document.createElement('link');
-          css.rel = 'stylesheet';
-          css.href = 'https://unpkg.com/swagger-ui-dist@5/swagger-ui.css';
-          document.head.appendChild(css);
-        }
-      };
-    `,
         swaggerOptions: {
             persistAuthorization: true,
             displayRequestDuration: true,
@@ -84,17 +74,6 @@ async function bootstrap() {
             deepLinking: true,
             defaultModelsExpandDepth: 1,
             defaultModelExpandDepth: 1,
-            onComplete: function () {
-                console.log("✅ Shopify Shop API - Swagger UI loaded successfully");
-            },
-            requestInterceptor: function (request) {
-                console.log("📤 API Request:", request);
-                return request;
-            },
-            responseInterceptor: function (response) {
-                console.log("📥 API Response:", response);
-                return response;
-            },
         },
     });
     const configService = app.get(config_1.ConfigService);
