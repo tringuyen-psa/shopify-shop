@@ -1,4 +1,5 @@
 import { Repository } from 'typeorm';
+import 'express-serve-static-core';
 import { User } from './entities/user.entity';
 import { Shop } from '../shops/entities/shop.entity';
 import { Order } from '../orders/entities/order.entity';

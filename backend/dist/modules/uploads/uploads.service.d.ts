@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import 'express-serve-static-core';
 export interface UploadedFile {
     id: string;
     filename: string;
