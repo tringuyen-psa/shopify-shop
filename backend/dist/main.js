@@ -33,12 +33,12 @@ async function bootstrap() {
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api', app, document);
+    swagger_1.SwaggerModule.setup('api/docs', app, document);
     const configService = app.get(config_1.ConfigService);
     const port = configService.get('PORT') || 3001;
     await app.listen(port);
     console.log(`🚀 Backend running on http://localhost:${port}`);
-    console.log(`📚 Swagger documentation available at http://localhost:${port}/api`);
+    console.log(`📚 Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

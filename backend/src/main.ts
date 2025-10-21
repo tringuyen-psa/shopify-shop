@@ -39,7 +39,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api/docs', app, document);
 
   // Get config service
   const configService = app.get(ConfigService);
@@ -47,6 +47,6 @@ async function bootstrap() {
 
   await app.listen(port);
   console.log(`🚀 Backend running on http://localhost:${port}`);
-  console.log(`📚 Swagger documentation available at http://localhost:${port}/api`);
+  console.log(`📚 Swagger documentation available at http://localhost:${port}/api/docs`);
 }
 bootstrap();
