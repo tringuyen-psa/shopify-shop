@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
+const app_controller_1 = require("./app.controller");
 const auth_module_1 = require("./modules/auth/auth.module");
 const users_module_1 = require("./modules/users/users.module");
 const shops_module_1 = require("./modules/shops/shops.module");
@@ -21,7 +22,6 @@ const subscriptions_module_1 = require("./modules/subscriptions/subscriptions.mo
 const payments_module_1 = require("./modules/payments/payments.module");
 const platform_module_1 = require("./modules/platform/platform.module");
 const health_module_1 = require("./modules/health/health.module");
-const app_module_1 = require("./modules/app/app.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -53,9 +53,8 @@ exports.AppModule = AppModule = __decorate([
             payments_module_1.PaymentsModule,
             platform_module_1.PlatformModule,
             health_module_1.HealthModule,
-            app_module_1.AppModule,
         ],
-        controllers: [],
+        controllers: [app_controller_1.AppController],
         providers: [],
     })
 ], AppModule);

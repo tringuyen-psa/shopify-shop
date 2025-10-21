@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { ShopsModule } from './modules/shops/shops.module';
@@ -12,7 +13,6 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { HealthModule } from './modules/health/health.module';
-import { AppModule as AppControllerModule } from './modules/app/app.module';
 
 @Module({
   imports: [
@@ -41,9 +41,8 @@ import { AppModule as AppControllerModule } from './modules/app/app.module';
     PaymentsModule,
     PlatformModule,
     HealthModule,
-    AppControllerModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}
