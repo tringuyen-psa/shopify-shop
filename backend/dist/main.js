@@ -45,26 +45,39 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup("docs", app, document, {
-        customSiteTitle: "Shopify Shop API Documentation",
         customCss: `
+      .topbar { display: none }
       .swagger-ui .topbar { display: none }
+      .information-container { display: none }
       .swagger-ui .info .title { color: #61dafb; }
       .swagger-ui .scheme-container { background: #f7f7f7; }
     `,
-        customJsStr: `
-      window.onload = function() {
-        console.log("Swagger UI loaded with Vercel optimization");
-        // Add any custom JavaScript here
-      }
-    `,
+        customSiteTitle: "Shopify Shop API Documentation",
         customfavIcon: "/favicon.ico",
+        customJs: "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+        customJsStr: `
+      // Load Swagger UI from CDN if local assets fail
+      window.onload = function() {
+        console.log("Swagger UI loaded with CDN fallback");
+        if (!window.SwaggerUIBundle) {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js';
+          document.head.appendChild(script);
+
+          const css = document.createElement('link');
+          css.rel = 'stylesheet';
+          css.href = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css';
+          document.head.appendChild(css);
+        }
+      };
+    `,
         swaggerOptions: {
             persistAuthorization: true,
             displayRequestDuration: true,
+            docExpansion: "none",
             filter: true,
             showExtensions: true,
             showCommonExtensions: true,
-            docExpansion: "none",
             tryItOutEnabled: true,
             supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
             onComplete: function () {
