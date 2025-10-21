@@ -46,7 +46,17 @@ async function bootstrap() {
     const document = swagger_1.SwaggerModule.createDocument(app, config);
     swagger_1.SwaggerModule.setup("docs", app, document, {
         customSiteTitle: "Shopify Shop API Documentation",
-        customCss: ".swagger-ui .topbar { display: none }",
+        customCss: `
+      .swagger-ui .topbar { display: none }
+      .swagger-ui .info .title { color: #61dafb; }
+      .swagger-ui .scheme-container { background: #f7f7f7; }
+    `,
+        customJsStr: `
+      window.onload = function() {
+        console.log("Swagger UI loaded with Vercel optimization");
+        // Add any custom JavaScript here
+      }
+    `,
         customfavIcon: "/favicon.ico",
         swaggerOptions: {
             persistAuthorization: true,
@@ -55,6 +65,17 @@ async function bootstrap() {
             showExtensions: true,
             showCommonExtensions: true,
             docExpansion: "none",
+            tryItOutEnabled: true,
+            supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+            onComplete: function () {
+                console.log("Swagger UI loaded successfully");
+            },
+            requestInterceptor: function (request) {
+                return request;
+            },
+            responseInterceptor: function (response) {
+                return response;
+            }
         },
     });
     const configService = app.get(config_1.ConfigService);
