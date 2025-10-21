@@ -39,7 +39,21 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+
+  // Custom Swagger options for better compatibility with serverless platforms
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'Shopify Shop API Documentation',
+    customCss: '.swagger-ui .topbar { display: none }',
+    customfavIcon: '/favicon.ico',
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+      docExpansion: 'none',
+    },
+  });
 
   // Get config service
   const configService = app.get(ConfigService);
@@ -47,6 +61,6 @@ async function bootstrap() {
 
   await app.listen(port);
   console.log(`🚀 Backend running on http://localhost:${port}`);
-  console.log(`📚 Swagger documentation available at http://localhost:${port}/api/docs`);
+  console.log(`📚 Swagger documentation available at http://localhost:${port}/docs`);
 }
 bootstrap();

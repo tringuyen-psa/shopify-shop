@@ -33,12 +33,24 @@ async function bootstrap() {
         .addBearerAuth()
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api/docs', app, document);
+    swagger_1.SwaggerModule.setup('docs', app, document, {
+        customSiteTitle: 'Shopify Shop API Documentation',
+        customCss: '.swagger-ui .topbar { display: none }',
+        customfavIcon: '/favicon.ico',
+        swaggerOptions: {
+            persistAuthorization: true,
+            displayRequestDuration: true,
+            filter: true,
+            showExtensions: true,
+            showCommonExtensions: true,
+            docExpansion: 'none',
+        },
+    });
     const configService = app.get(config_1.ConfigService);
     const port = configService.get('PORT') || 3001;
     await app.listen(port);
     console.log(`🚀 Backend running on http://localhost:${port}`);
-    console.log(`📚 Swagger documentation available at http://localhost:${port}/api/docs`);
+    console.log(`📚 Swagger documentation available at http://localhost:${port}/docs`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
