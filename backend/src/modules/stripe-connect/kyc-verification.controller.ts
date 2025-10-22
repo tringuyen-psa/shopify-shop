@@ -169,7 +169,7 @@ export class KycVerificationController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(
     @Param('verificationId') verificationId: string,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
     @Body() uploadDto: UploadKycDocumentDto,
     @Request() req
   ) {

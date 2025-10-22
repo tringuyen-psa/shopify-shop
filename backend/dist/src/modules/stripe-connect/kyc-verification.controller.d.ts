@@ -36,7 +36,7 @@ export declare class KycVerificationController {
         data: import("./entities/kyc-verification.entity").KycVerification;
         message: string;
     }>;
-    uploadDocument(verificationId: string, file: Express.Multer.File, uploadDto: UploadKycDocumentDto, req: any): Promise<{
+    uploadDocument(verificationId: string, file: any, uploadDto: UploadKycDocumentDto, req: any): Promise<{
         success: boolean;
         data: import("./entities/kyc-document.entity").KycDocument;
         message: string;
