@@ -5,6 +5,7 @@ import { Order } from '../../orders/entities/order.entity';
 import { CheckoutSession } from '../../checkout/entities/checkout-session.entity';
 import { Subscription } from '../../subscriptions/entities/subscription.entity';
 import { ShippingZone } from '../../shipping/entities/shipping-zone.entity';
+import { KycVerification } from '../../stripe-connect/entities/kyc-verification.entity';
 
 @Entity('shops')
 export class Shop {
@@ -44,6 +45,34 @@ export class Shop {
 
   @Column({ default: false })
   stripePayoutsEnabled: boolean;
+
+  // KYC Verification fields
+  @Column({ type: 'varchar', length: 50, default: 'none' })
+  kycStatus: 'none' | 'pending' | 'in_review' | 'additional_information_required' | 'approved' | 'rejected' | 'restricted';
+
+  @Column({ type: 'date', nullable: true })
+  kycSubmittedAt: Date;
+
+  @Column({ type: 'date', nullable: true })
+  kycVerifiedAt: Date;
+
+  @Column({ type: 'date', nullable: true })
+  kycRejectedAt: Date;
+
+  @Column({ type: 'text', nullable: true })
+  kycRejectionReason: string;
+
+  @Column({ type: 'json', nullable: true })
+  kycRequirements: any;
+
+  @Column({ type: 'json', nullable: true })
+  kycCapabilities: any;
+
+  @Column({ default: false })
+  hasValidKyc: boolean;
+
+  @Column({ type: 'uuid', nullable: true })
+  currentKycVerificationId: string;
 
   // Platform settings
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 15.00 })
@@ -119,6 +148,9 @@ export class Shop {
 
   @OneToMany(() => ShippingZone, zone => zone.shop)
   shippingZones: ShippingZone[];
+
+  @OneToMany(() => KycVerification, kycVerification => kycVerification.shop)
+  kycVerifications: KycVerification[];
 
   // Subscription plan fields
   @Column({

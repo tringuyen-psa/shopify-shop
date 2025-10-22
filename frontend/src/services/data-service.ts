@@ -18,10 +18,10 @@ import {
   CheckoutSession,
   OrdersQueryParams,
   FulfillOrderRequest,
-  ShopsQueryParams
-} from '@/lib/api';
+  ShopsQueryParams,
+} from "@/lib/api";
 
-import type { AuthResponse } from '@/lib/api/auth';
+import type { AuthResponse } from "@/libauth";
 
 // Re-export authApi and types for components that need them
 export { authApi };
@@ -32,14 +32,13 @@ export type { AuthResponse };
  * This prevents direct database access or hardcoded data
  */
 class DataService {
-
   // USER DATA SERVICES
   async getCurrentUser(): Promise<User> {
     try {
       const user = await authApi.getCurrentUser();
       return user;
     } catch (error) {
-      console.error('Failed to fetch current user:', error);
+      console.error("Failed to fetch current user:", error);
       throw error;
     }
   }
@@ -49,7 +48,7 @@ class DataService {
       const updatedUser = await authApi.updateProfile(data);
       return updatedUser;
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      console.error("Failed to update profile:", error);
       throw error;
     }
   }
@@ -65,7 +64,7 @@ class DataService {
       const shops = await shopsApi.getAllShops(params);
       return shops;
     } catch (error) {
-      console.error('Failed to fetch all shops:', error);
+      console.error("Failed to fetch all shops:", error);
       throw error;
     }
   }
@@ -75,17 +74,23 @@ class DataService {
       const shop = await shopsApi.getShopBySlug(slug);
       return shop;
     } catch (error) {
-      console.error('Failed to fetch shop:', error);
+      console.error("Failed to fetch shop:", error);
       throw error;
     }
   }
 
   async getMyShop(): Promise<Shop> {
     try {
-      const shop = await shopsApi.getMyShop();
-      return shop;
+      const shops = await shopsApi.getMyShop();
+
+      if (!shops || shops.length === 0) {
+        throw new Error("User does not have a shop");
+      }
+
+      // Return the first shop (assuming one shop per user for now)
+      return shops[0];
     } catch (error) {
-      console.error('Failed to fetch my shop:', error);
+      console.error("Failed to fetch my shop:", error);
       throw error;
     }
   }
@@ -96,7 +101,7 @@ class DataService {
       const shop = await shopsApi.createShop(data);
       return shop;
     } catch (error) {
-      console.error('Failed to create shop:', error);
+      console.error("Failed to create shop:", error);
       throw error;
     }
   }
@@ -106,7 +111,7 @@ class DataService {
       const shop = await shopsApi.updateShop(shopId, data);
       return shop;
     } catch (error) {
-      console.error('Failed to update shop:', error);
+      console.error("Failed to update shop:", error);
       throw error;
     }
   }
@@ -114,15 +119,23 @@ class DataService {
   async getShopProducts(shopId: string): Promise<Product[]> {
     try {
       // Handle special case where 'current' means the current user's shop
-      if (shopId === 'current') {
-        const myShop = await this.getMyShop();
-        shopId = myShop.slug; // Use slug instead of ID for backend API
+      if (shopId === "current") {
+        try {
+          const myShop = await this.getMyShop();
+          if (!myShop || !myShop.id) {
+            throw new Error("User does not have a shop");
+          }
+          shopId = myShop.id; // Use ID instead of slug for backend API
+        } catch (shopError) {
+          console.error("Failed to get user shop:", shopError);
+          throw new Error("User does not have a shop or shop access denied");
+        }
       }
 
       const products = await shopsApi.getShopProducts(shopId);
       return products as Product[];
     } catch (error) {
-      console.error('Failed to fetch shop products:', error);
+      console.error("Failed to fetch shop products:", error);
       throw error;
     }
   }
@@ -133,7 +146,7 @@ class DataService {
       const products = await productsApi.getProducts(filters);
       return products;
     } catch (error) {
-      console.error('Failed to fetch products:', error);
+      console.error("Failed to fetch products:", error);
       throw error;
     }
   }
@@ -143,57 +156,75 @@ class DataService {
       const product = await productsApi.getProductById(id);
       return product;
     } catch (error) {
-      console.error('Failed to fetch product:', error);
+      console.error("Failed to fetch product:", error);
       throw error;
     }
   }
 
-  async getProductByShopAndProductSlug(shopSlug: string, productSlug: string): Promise<Product> {
+  async getProductByShopAndProductSlug(
+    shopSlug: string,
+    productSlug: string
+  ): Promise<Product> {
     try {
       const product = await productsApi.getProductBySlug(productSlug);
       return product;
     } catch (error) {
-      console.error('Failed to fetch product:', error);
+      console.error("Failed to fetch product:", error);
       throw error;
     }
   }
 
-  async getProductsByShopId(shopId: string, filters?: ProductFilters): Promise<Product[]> {
+  async getProductsByShopId(
+    shopId: string,
+    filters?: ProductFilters
+  ): Promise<Product[]> {
     try {
       const products = await productsApi.getProductsByShopId(shopId, filters);
       return products;
     } catch (error) {
-      console.error('Failed to fetch products by shop:', error);
+      console.error("Failed to fetch products by shop:", error);
       throw error;
     }
   }
 
-  async getProductsByShopSlug(shopSlug: string, filters?: ProductFilters): Promise<Product[]> {
+  async getProductsByShopSlug(
+    shopSlug: string,
+    filters?: ProductFilters
+  ): Promise<Product[]> {
     try {
-      const products = await productsApi.getProductsByShopSlug(shopSlug, filters);
+      const products = await productsApi.getProductsByShopSlug(
+        shopSlug,
+        filters
+      );
       return products;
     } catch (error) {
-      console.error('Failed to fetch products by shop slug:', error);
+      console.error("Failed to fetch products by shop slug:", error);
       throw error;
     }
   }
 
-  async createProduct(shopId: string, productData: CreateProductDto): Promise<Product> {
+  async createProduct(
+    shopId: string,
+    productData: CreateProductDto
+  ): Promise<Product> {
     try {
       const product = await productsApi.createProduct(shopId, productData);
       return product;
     } catch (error) {
-      console.error('Failed to create product:', error);
+      console.error("Failed to create product:", error);
       throw error;
     }
   }
 
-  async updateProduct(id: string, productData: UpdateProductDto): Promise<Product> {
+  async updateProduct(
+    id: string,
+    productData: UpdateProductDto
+  ): Promise<Product> {
     try {
       const product = await productsApi.updateProduct(id, productData);
       return product;
     } catch (error) {
-      console.error('Failed to update product:', error);
+      console.error("Failed to update product:", error);
       throw error;
     }
   }
@@ -202,7 +233,7 @@ class DataService {
     try {
       await productsApi.deleteProduct(id);
     } catch (error) {
-      console.error('Failed to delete product:', error);
+      console.error("Failed to delete product:", error);
       throw error;
     }
   }
@@ -212,7 +243,7 @@ class DataService {
       const result = await productsApi.uploadImage(file);
       return result;
     } catch (error) {
-      console.error('Failed to upload product image:', error);
+      console.error("Failed to upload product image:", error);
       throw error;
     }
   }
@@ -228,7 +259,7 @@ class DataService {
       const subscriptions = await subscriptionsApi.getMySubscriptions();
       return subscriptions;
     } catch (error) {
-      console.error('Failed to fetch subscriptions:', error);
+      console.error("Failed to fetch subscriptions:", error);
       throw error;
     }
   }
@@ -238,17 +269,23 @@ class DataService {
       const subscription = await subscriptionsApi.getSubscription(id);
       return subscription;
     } catch (error) {
-      console.error('Failed to fetch subscription:', error);
+      console.error("Failed to fetch subscription:", error);
       throw error;
     }
   }
 
-  async cancelSubscription(id: string, cancelAtPeriodEnd?: boolean): Promise<Subscription> {
+  async cancelSubscription(
+    id: string,
+    cancelAtPeriodEnd?: boolean
+  ): Promise<Subscription> {
     try {
-      const subscription = await subscriptionsApi.cancelSubscription(id, cancelAtPeriodEnd);
+      const subscription = await subscriptionsApi.cancelSubscription(
+        id,
+        cancelAtPeriodEnd
+      );
       return subscription;
     } catch (error) {
-      console.error('Failed to cancel subscription:', error);
+      console.error("Failed to cancel subscription:", error);
       throw error;
     }
   }
@@ -256,14 +293,14 @@ class DataService {
   // CHECKOUT DATA SERVICES
   async createCheckoutSession(data: {
     productId: string;
-    billingCycle: 'one_time' | 'weekly' | 'monthly' | 'yearly';
+    billingCycle: "one_time" | "weekly" | "monthly" | "yearly";
     quantity?: number;
   }): Promise<CheckoutSession> {
     try {
       const session = await checkoutApi.createSession(data);
       return session;
     } catch (error) {
-      console.error('Failed to create checkout session:', error);
+      console.error("Failed to create checkout session:", error);
       throw error;
     }
   }
@@ -273,50 +310,63 @@ class DataService {
       const session = await checkoutApi.getSession(sessionId);
       return session;
     } catch (error) {
-      console.error('Failed to fetch checkout session:', error);
+      console.error("Failed to fetch checkout session:", error);
       throw error;
     }
   }
 
-  async saveCheckoutInformation(sessionId: string, data: {
-    email: string;
-    name: string;
-    phone?: string;
-    shippingAddress: {
-      line1: string;
-      line2?: string;
-      city: string;
-      state: string;
-      country: string;
-      postalCode: string;
-    };
-    note?: string;
-  }): Promise<CheckoutSession> {
+  async saveCheckoutInformation(
+    sessionId: string,
+    data: {
+      email: string;
+      name: string;
+      phone?: string;
+      shippingAddress: {
+        line1: string;
+        line2?: string;
+        city: string;
+        state: string;
+        country: string;
+        postalCode: string;
+      };
+      note?: string;
+    }
+  ): Promise<CheckoutSession> {
     try {
       const session = await checkoutApi.saveInformation(sessionId, data);
       return session;
     } catch (error) {
-      console.error('Failed to save checkout information:', error);
+      console.error("Failed to save checkout information:", error);
       throw error;
     }
   }
 
-  async selectShipping(sessionId: string, shippingRateId: string): Promise<CheckoutSession> {
+  async selectShipping(
+    sessionId: string,
+    shippingRateId: string
+  ): Promise<CheckoutSession> {
     try {
-      const session = await checkoutApi.selectShipping(sessionId, { shippingRateId });
+      const session = await checkoutApi.selectShipping(sessionId, {
+        shippingRateId,
+      });
       return session;
     } catch (error) {
-      console.error('Failed to select shipping:', error);
+      console.error("Failed to select shipping:", error);
       throw error;
     }
   }
 
-  async createPayment(sessionId: string, paymentMethod: string): Promise<CheckoutSession> {
+  async createPayment(
+    sessionId: string,
+    paymentMethod: string
+  ): Promise<CheckoutSession> {
     try {
-      const session = await checkoutApi.createPayment(sessionId, { paymentMethod });
+      const session = await checkoutApi.createPayment(sessionId, {
+        paymentMethod,
+      });
       return session;
     } catch (error) {
-      console.error('Failed to create payment:', error);
+      console.error("Failed to create payment:", error);
       throw error;
     }
   }
@@ -326,13 +376,16 @@ class DataService {
       const shipping = await checkoutApi.calculateShipping(sessionId);
       return shipping;
     } catch (error) {
-      console.error('Failed to calculate shipping:', error);
+      console.error("Failed to calculate shipping:", error);
       throw error;
     }
   }
 
   // ORDERS DATA SERVICES
-  async getShopOrders(shopId: string, params?: OrdersQueryParams): Promise<{
+  async getShopOrders(
+    shopId: string,
+    params?: OrdersQueryParams
+  ): Promise<{
     orders: Order[];
     total: number;
     page: number;
@@ -342,7 +395,7 @@ class DataService {
       const orders = await ordersApi.getShopOrders(shopId, params);
       return orders;
     } catch (error) {
-      console.error('Failed to fetch shop orders:', error);
+      console.error("Failed to fetch shop orders:", error);
       throw error;
     }
   }
@@ -357,7 +410,7 @@ class DataService {
       const orders = await ordersApi.getMyOrders(params);
       return orders;
     } catch (error) {
-      console.error('Failed to fetch my orders:', error);
+      console.error("Failed to fetch my orders:", error);
       throw error;
     }
   }
@@ -367,17 +420,20 @@ class DataService {
       const order = await ordersApi.getOrder(orderNumber);
       return order;
     } catch (error) {
-      console.error('Failed to fetch order:', error);
+      console.error("Failed to fetch order:", error);
       throw error;
     }
   }
 
-  async fulfillOrder(orderId: string, data: FulfillOrderRequest): Promise<Order> {
+  async fulfillOrder(
+    orderId: string,
+    data: FulfillOrderRequest
+  ): Promise<Order> {
     try {
       const order = await ordersApi.fulfillOrder(orderId, data);
       return order;
     } catch (error) {
-      console.error('Failed to fulfill order:', error);
+      console.error("Failed to fulfill order:", error);
       throw error;
     }
   }
@@ -387,7 +443,7 @@ class DataService {
       const order = await ordersApi.shipOrder(orderId, data);
       return order;
     } catch (error) {
-      console.error('Failed to ship order:', error);
+      console.error("Failed to ship order:", error);
       throw error;
     }
   }
@@ -397,7 +453,7 @@ class DataService {
       const order = await ordersApi.cancelOrder(orderId, reason);
       return order;
     } catch (error) {
-      console.error('Failed to cancel order:', error);
+      console.error("Failed to cancel order:", error);
       throw error;
     }
   }
@@ -407,7 +463,7 @@ class DataService {
       const order = await ordersApi.updateInternalNote(orderId, note);
       return order;
     } catch (error) {
-      console.error('Failed to update internal note:', error);
+      console.error("Failed to update internal note:", error);
       throw error;
     }
   }
@@ -427,7 +483,7 @@ class DataService {
       const stats = await ordersApi.getOrderStats(params);
       return stats;
     } catch (error) {
-      console.error('Failed to fetch order stats:', error);
+      console.error("Failed to fetch order stats:", error);
       throw error;
     }
   }
@@ -439,41 +495,46 @@ class DataService {
       const shop = await this.getShopBySlug(shopId);
 
       // Check if user owns the shop or is admin
-      return shop.ownerId === user.id || user.role === 'platform_admin';
+      return shop.ownerId === user.id || user.role === "platform_admin";
     } catch (error) {
-      console.error('Failed to validate shop access:', error);
+      console.error("Failed to validate shop access:", error);
       return false;
     }
   }
 
-  async getShopWithProductCount(shopSlug: string): Promise<{ shop: Shop; productCount: number }> {
+  async getShopWithProductCount(
+    shopSlug: string
+  ): Promise<{ shop: Shop; productCount: number }> {
     try {
       const [shop, products] = await Promise.all([
         this.getShopBySlug(shopSlug),
-        this.getShopProducts(shopSlug)
+        this.getShopProducts(shopSlug),
       ]);
 
       return {
         shop,
-        productCount: products.length
+        productCount: products.length,
       };
     } catch (error) {
-      console.error('Failed to fetch shop with product count:', error);
+      console.error("Failed to fetch shop with product count:", error);
       throw error;
     }
   }
 
-  async searchProducts(query: string, filters?: ProductFilters): Promise<Product[]> {
+  async searchProducts(
+    query: string,
+    filters?: ProductFilters
+  ): Promise<Product[]> {
     try {
       const searchFilters: ProductFilters = {
         ...filters,
-        search: query
+        search: query,
       };
 
       const products = await this.getProducts(searchFilters);
       return products;
     } catch (error) {
-      console.error('Failed to search products:', error);
+      console.error("Failed to search products:", error);
       throw error;
     }
   }
@@ -497,5 +558,5 @@ export type {
   CheckoutSession,
   OrdersQueryParams,
   FulfillOrderRequest,
-  ShopsQueryParams
+  ShopsQueryParams,
 };

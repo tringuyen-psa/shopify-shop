@@ -15,14 +15,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckoutController = void 0;
 const common_1 = require("@nestjs/common");
 const checkout_service_1 = require("./checkout.service");
+const orders_service_1 = require("../orders/orders.service");
 const create_checkout_session_dto_1 = require("./dto/create-checkout-session.dto");
 const save_information_dto_1 = require("./dto/save-information.dto");
 const select_shipping_dto_1 = require("./dto/select-shipping.dto");
 const create_payment_dto_1 = require("./dto/create-payment.dto");
+const create_payment_intent_dto_1 = require("./dto/create-payment-intent.dto");
 const swagger_1 = require("@nestjs/swagger");
 let CheckoutController = class CheckoutController {
-    constructor(checkoutService) {
+    constructor(checkoutService, ordersService) {
         this.checkoutService = checkoutService;
+        this.ordersService = ordersService;
     }
     async createCheckoutSession(createCheckoutSessionDto) {
         try {
@@ -105,6 +108,21 @@ let CheckoutController = class CheckoutController {
             throw new common_1.BadRequestException(error.message);
         }
     }
+    async createPaymentIntent(createPaymentIntentDto) {
+        try {
+            const result = await this.checkoutService.createPaymentIntent(createPaymentIntentDto);
+            return {
+                success: true,
+                data: result,
+            };
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException || error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
     async getCheckoutSummary(sessionId) {
         try {
             const summary = await this.checkoutService.getCheckoutSummary(sessionId);
@@ -147,6 +165,46 @@ let CheckoutController = class CheckoutController {
             if (error instanceof common_1.NotFoundException || error instanceof common_1.BadRequestException) {
                 throw error;
             }
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async updateSessionStatus(body) {
+        try {
+            await this.checkoutService.updateSessionStatus(body.sessionId, body.status);
+            return {
+                success: true,
+                message: 'Session status updated successfully',
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message);
+        }
+    }
+    async updateSessionByStripeId(body) {
+        try {
+            await this.checkoutService.updateSessionByStripeId(body.stripeSessionId, body.status);
+            if (body.status === 'completed') {
+                try {
+                    console.log('Payment completed, creating order for Stripe session:', body.stripeSessionId);
+                    const checkoutSession = await this.checkoutService.findByStripeSessionId(body.stripeSessionId);
+                    if (checkoutSession) {
+                        const order = await this.ordersService.createOrderFromCheckoutSession(checkoutSession.sessionId);
+                        console.log('Order created successfully:', order.orderNumber);
+                    }
+                    else {
+                        console.log('Checkout session not found for Stripe session:', body.stripeSessionId);
+                    }
+                }
+                catch (orderError) {
+                    console.error('Failed to create order from checkout session:', orderError);
+                }
+            }
+            return {
+                success: true,
+                message: 'Session status updated successfully',
+            };
+        }
+        catch (error) {
             throw new common_1.BadRequestException(error.message);
         }
     }
@@ -217,6 +275,18 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], CheckoutController.prototype, "createPayment", null);
 __decorate([
+    (0, common_1.Post)('create-payment-intent'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Create payment intent for direct card payments' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Payment intent created successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Payment intent creation failed' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Session not found' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_payment_intent_dto_1.CreatePaymentIntentDto]),
+    __metadata("design:returntype", Promise)
+], CheckoutController.prototype, "createPaymentIntent", null);
+__decorate([
     (0, common_1.Get)('sessions/:sessionId/summary'),
     (0, swagger_1.ApiOperation)({ summary: 'Get checkout summary with all details' }),
     (0, swagger_1.ApiParam)({ name: 'sessionId', description: 'Public session ID' }),
@@ -250,9 +320,30 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CheckoutController.prototype, "getPublicCheckoutData", null);
+__decorate([
+    (0, common_1.Post)('update-session-status'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Update checkout session status (webhook)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Session status updated successfully' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CheckoutController.prototype, "updateSessionStatus", null);
+__decorate([
+    (0, common_1.Post)('update-session-by-stripe-id'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Update checkout session status by Stripe ID (webhook)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Session status updated successfully' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CheckoutController.prototype, "updateSessionByStripeId", null);
 exports.CheckoutController = CheckoutController = __decorate([
     (0, swagger_1.ApiTags)('checkout'),
     (0, common_1.Controller)('checkout'),
-    __metadata("design:paramtypes", [checkout_service_1.CheckoutService])
+    __metadata("design:paramtypes", [checkout_service_1.CheckoutService,
+        orders_service_1.OrdersService])
 ], CheckoutController);
 //# sourceMappingURL=checkout.controller.js.map

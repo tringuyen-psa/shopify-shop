@@ -15,6 +15,7 @@ export declare class ShopsService {
     findBySlug(slug: string): Promise<Shop>;
     findProductsBySlug(slug: string): Promise<any[]>;
     findByUserId(userId: string): Promise<Shop>;
+    findByOwner(userId: string): Promise<Shop[]>;
     create(shopData: Partial<Shop>, userId: string): Promise<Shop>;
     private generateSlugFromName;
     private generateSlugFromId;
@@ -25,6 +26,7 @@ export declare class ShopsService {
         page: number;
         limit: number;
     }>;
+    remove(id: string): Promise<void>;
     updateSubscriptionPlan(shopId: string, planData: {
         plan: 'basic' | 'shopify' | 'advanced' | 'shopify_plus';
         price: number;
@@ -33,5 +35,7 @@ export declare class ShopsService {
     }): Promise<Shop>;
     cancelSubscription(shopId: string): Promise<Shop>;
     getSubscriptionPlans(): Promise<any[]>;
+    findByStripeAccountId(stripeAccountId: string): Promise<Shop>;
+    stripeOnboardingComplete(shopId: string): Promise<Shop>;
 }
 export {};

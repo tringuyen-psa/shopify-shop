@@ -323,6 +323,32 @@ export class OrdersController {
     };
   }
 
+  // Create order from checkout session
+  @Post('confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create order from checkout session (customer payment success)' })
+  @ApiResponse({ status: 200, description: 'Order created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid session or order creation failed' })
+  @ApiResponse({ status: 404, description: 'Checkout session not found' })
+  async createOrderFromCheckoutSession(@Request() req: any, @Body() body: { sessionId: string }) {
+    const user = req.user;
+
+    if (!user) {
+      throw new BadRequestException('User authentication required');
+    }
+
+    if (!body.sessionId) {
+      throw new BadRequestException('Session ID is required');
+    }
+
+    const order = await this.ordersService.createOrderFromCheckoutSession(body.sessionId);
+
+    return {
+      success: true,
+      data: order,
+    };
+  }
+
   // Get order tracking information (public endpoint)
   @Get(':orderNumber/tracking')
   @ApiOperation({ summary: 'Get order tracking information (public)' })

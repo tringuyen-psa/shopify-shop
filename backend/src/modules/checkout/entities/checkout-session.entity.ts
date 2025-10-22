@@ -96,7 +96,10 @@ export class CheckoutSession {
   stripeCheckoutSessionId: string;
 
   @Column({ nullable: true })
-  paymentIntentId: string;
+  stripePaymentIntentId: string;
+
+  @Column({ nullable: true })
+  stripeAccountId: string;
 
   // Current step
   @Column({ default: 1 })
@@ -107,7 +110,7 @@ export class CheckoutSession {
     length: 50,
     default: 'pending',
   })
-  status: 'pending' | 'completed' | 'expired' | 'abandoned';
+  status: 'pending' | 'processing' | 'completed' | 'expired' | 'abandoned';
 
   @Column()
   expiresAt: Date;

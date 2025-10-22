@@ -436,6 +436,68 @@ let OrdersService = class OrdersService {
             .sort((a, b) => b.revenue - a.revenue)
             .slice(0, 10);
     }
+    async createOrderFromCheckoutSession(checkoutSessionId) {
+        const checkoutSession = await this.checkoutSessionRepository.findOne({
+            where: { sessionId: checkoutSessionId },
+            relations: ['product', 'product.shop', 'customer']
+        });
+        if (!checkoutSession) {
+            throw new common_1.NotFoundException('Checkout session not found');
+        }
+        const existingOrder = await this.orderRepository.findOne({
+            where: { checkoutSessionId: checkoutSession.id }
+        });
+        if (existingOrder) {
+            console.log('Order already exists for checkout session:', checkoutSessionId);
+            return existingOrder;
+        }
+        console.log('Creating order from checkout session:', checkoutSessionId);
+        const platformFeePercent = 15;
+        const platformFee = this.calculatePlatformFee(typeof checkoutSession.totalAmount === 'string'
+            ? parseFloat(checkoutSession.totalAmount)
+            : checkoutSession.totalAmount, platformFeePercent);
+        const totalAmount = typeof checkoutSession.totalAmount === 'string'
+            ? parseFloat(checkoutSession.totalAmount)
+            : checkoutSession.totalAmount;
+        const shopRevenue = totalAmount - platformFee;
+        const createOrderDto = {
+            shopId: checkoutSession.product.shop.id,
+            productId: checkoutSession.product.id,
+            customerId: null,
+            checkoutSessionId: checkoutSession.id,
+            customerEmail: checkoutSession.email,
+            customerName: checkoutSession.customerName,
+            customerPhone: checkoutSession.phone,
+            shippingAddressLine1: checkoutSession.shippingAddressLine1,
+            shippingAddressLine2: checkoutSession.shippingAddressLine2,
+            platformFeePercent: 15.0,
+            shippingCity: checkoutSession.shippingCity,
+            shippingState: checkoutSession.shippingState,
+            shippingCountry: checkoutSession.shippingCountry,
+            shippingPostalCode: checkoutSession.shippingPostalCode,
+            shippingMethodName: checkoutSession.shippingMethodName,
+            shippingCost: checkoutSession.shippingCost || 0,
+            productPrice: checkoutSession.productPrice,
+            totalAmount: totalAmount,
+            billingCycle: checkoutSession.billingCycle,
+            paymentMethod: 'stripe',
+            paymentIntentId: checkoutSession.stripePaymentIntentId || checkoutSession.stripeCheckoutSessionId,
+            paymentStatus: 'paid',
+            fulfillmentStatus: 'unfulfilled',
+            platformFee: platformFee,
+            shopRevenue: shopRevenue,
+            customerNote: checkoutSession.customerNote,
+            paidAt: new Date().toISOString(),
+            items: [{
+                    productId: checkoutSession.product.id,
+                    productName: checkoutSession.product.name,
+                    productPrice: checkoutSession.productPrice,
+                    quantity: 1,
+                    totalPrice: checkoutSession.productPrice
+                }]
+        };
+        return await this.create(createOrderDto);
+    }
 };
 exports.OrdersService = OrdersService;
 exports.OrdersService = OrdersService = __decorate([

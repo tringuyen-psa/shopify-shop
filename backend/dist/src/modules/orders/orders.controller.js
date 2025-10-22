@@ -138,6 +138,20 @@ let OrdersController = class OrdersController {
             data: order,
         };
     }
+    async createOrderFromCheckoutSession(req, body) {
+        const user = req.user;
+        if (!user) {
+            throw new common_1.BadRequestException('User authentication required');
+        }
+        if (!body.sessionId) {
+            throw new common_1.BadRequestException('Session ID is required');
+        }
+        const order = await this.ordersService.createOrderFromCheckoutSession(body.sessionId);
+        return {
+            success: true,
+            data: order,
+        };
+    }
     async getOrderTracking(orderNumber, email) {
         const tracking = await this.ordersService.getOrderTracking(orderNumber, email);
         if (!tracking) {
@@ -356,6 +370,19 @@ __decorate([
     __metadata("design:paramtypes", [create_order_dto_1.CreateOrderDto]),
     __metadata("design:returntype", Promise)
 ], OrdersController.prototype, "createOrder", null);
+__decorate([
+    (0, common_1.Post)('confirm'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Create order from checkout session (customer payment success)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Order created successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Invalid session or order creation failed' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Checkout session not found' }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], OrdersController.prototype, "createOrderFromCheckoutSession", null);
 __decorate([
     (0, common_1.Get)(':orderNumber/tracking'),
     (0, swagger_1.ApiOperation)({ summary: 'Get order tracking information (public)' }),

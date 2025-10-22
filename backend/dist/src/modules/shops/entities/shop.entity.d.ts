@@ -4,6 +4,7 @@ import { Order } from '../../orders/entities/order.entity';
 import { CheckoutSession } from '../../checkout/entities/checkout-session.entity';
 import { Subscription } from '../../subscriptions/entities/subscription.entity';
 import { ShippingZone } from '../../shipping/entities/shipping-zone.entity';
+import { KycVerification } from '../../stripe-connect/entities/kyc-verification.entity';
 export declare class Shop {
     id: string;
     name: string;
@@ -17,6 +18,15 @@ export declare class Shop {
     stripeOnboardingComplete: boolean;
     stripeChargesEnabled: boolean;
     stripePayoutsEnabled: boolean;
+    kycStatus: 'none' | 'pending' | 'in_review' | 'additional_information_required' | 'approved' | 'rejected' | 'restricted';
+    kycSubmittedAt: Date;
+    kycVerifiedAt: Date;
+    kycRejectedAt: Date;
+    kycRejectionReason: string;
+    kycRequirements: any;
+    kycCapabilities: any;
+    hasValidKyc: boolean;
+    currentKycVerificationId: string;
     platformFeePercent: number;
     isActive: boolean;
     status: 'pending' | 'active' | 'suspended' | 'rejected';
@@ -39,6 +49,7 @@ export declare class Shop {
     checkoutSessions: CheckoutSession[];
     subscriptions: Subscription[];
     shippingZones: ShippingZone[];
+    kycVerifications: KycVerification[];
     subscriptionPlan: 'basic' | 'shopify' | 'advanced' | 'shopify_plus' | null;
     subscriptionPrice: number;
     subscriptionPeriod: string;

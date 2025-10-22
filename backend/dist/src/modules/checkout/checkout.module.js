@@ -15,6 +15,7 @@ const checkout_service_1 = require("./checkout.service");
 const checkout_controller_1 = require("./checkout.controller");
 const products_module_1 = require("../products/products.module");
 const shipping_module_1 = require("../shipping/shipping.module");
+const orders_module_1 = require("../orders/orders.module");
 let CheckoutModule = class CheckoutModule {
 };
 exports.CheckoutModule = CheckoutModule;
@@ -25,6 +26,7 @@ exports.CheckoutModule = CheckoutModule = __decorate([
             config_1.ConfigModule,
             products_module_1.ProductsModule,
             shipping_module_1.ShippingModule,
+            orders_module_1.OrdersModule,
         ],
         controllers: [checkout_controller_1.CheckoutController],
         providers: [checkout_service_1.CheckoutService],

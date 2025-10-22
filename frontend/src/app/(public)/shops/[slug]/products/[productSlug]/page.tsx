@@ -72,7 +72,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             if (!product) return;
 
             // Create checkout session
-            const response = await fetch('/api/checkout', {
+            const response = await fetch('checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

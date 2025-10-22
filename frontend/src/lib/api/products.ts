@@ -28,6 +28,8 @@ export interface Product {
   trialDays: number;
   features: string[];
   isActive: boolean;
+  rating?: number;
+  reviewCount?: number;
   createdAt: string;
   updatedAt: string;
   shop?: {
@@ -178,7 +180,7 @@ class ProductsAPI {
   async createProduct(shopId: string, productData: CreateProductDto): Promise<Product> {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/shops/${shopId}/products`,
+        `${API_BASE_URL}/products/shops/${shopId}`,
         productData,
         { headers: this.getAuthHeaders() }
       );

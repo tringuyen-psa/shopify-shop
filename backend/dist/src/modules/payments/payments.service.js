@@ -528,7 +528,7 @@ let PaymentsService = PaymentsService_1 = class PaymentsService {
             await this.checkoutSessionRepository.update({ sessionId: checkoutSessionId }, {
                 status: 'completed',
                 stripeCheckoutSessionId: paymentIntent.id,
-                paymentIntentId: paymentIntent.id,
+                stripePaymentIntentId: paymentIntent.id,
             });
         }
         catch (error) {

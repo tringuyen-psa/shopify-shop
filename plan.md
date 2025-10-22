@@ -152,7 +152,7 @@ Form đăng ký:
 - Phone (optional)
 - [x] Tôi đồng ý với điều khoản
      ↓
-POST /api/auth/register
+POST auth/register
 {
   email: "seller@example.com",
   password: "Password123!",
@@ -189,7 +189,7 @@ Form đơn giản:
 - Password
 - Name
      ↓
-POST /api/auth/register
+POST auth/register
 {
   email: "customer@example.com",
   password: "Password123!",
@@ -216,7 +216,7 @@ npm run seed:admin -- --email admin@platform.com --password Admin123!
 ```
 User → Nhập email + password
      ↓
-POST /api/auth/login
+POST auth/login
 {
   email: "user@example.com",
   password: "Password123!"
@@ -288,14 +288,14 @@ Sau thanh toán thành công:
 
 #### API Endpoints Permission Matrix
 
-| Endpoint                     | Customer      | Shop Owner     | Admin   |
-| ---------------------------- | ------------- | -------------- | ------- |
-| GET /api/products            | ✅ Public     | ✅             | ✅      |
-| POST /api/shops/:id/products | ❌            | ✅ Own shop    | ✅      |
-| GET /api/orders              | ✅ Own orders | ✅ Shop orders | ✅ All  |
-| POST /api/checkout/\*        | ✅            | ✅             | ✅      |
-| GET /api/admin/\*            | ❌            | ❌             | ✅ Only |
-| PUT /api/shops/:id           | ❌            | ✅ Own shop    | ✅      |
+| Endpoint                | Customer      | Shop Owner     | Admin   |
+| ----------------------- | ------------- | -------------- | ------- |
+| GET products            | ✅ Public     | ✅             | ✅      |
+| POST shops/:id/products | ❌            | ✅ Own shop    | ✅      |
+| GET orders              | ✅ Own orders | ✅ Shop orders | ✅ All  |
+| POST checkout/\*        | ✅            | ✅             | ✅      |
+| GET admin/\*            | ❌            | ❌             | ✅ Only |
+| PUT shops/:id           | ❌            | ✅ Own shop    | ✅      |
 
 #### Guards Implementation (NestJS)
 
@@ -742,7 +742,7 @@ INSERT INTO platform_settings (key, value, description) VALUES
 
 ```
 # Registration
-POST   /api/auth/register
+POST   auth/register
 Body: {
   email: string,
   password: string,
@@ -757,7 +757,7 @@ Response: {
 }
 
 # Login
-POST   /api/auth/login
+POST   auth/login
 Body: {
   email: string,
   password: string
@@ -769,14 +769,14 @@ Response: {
 }
 
 # Logout
-POST   /api/auth/logout
+POST   auth/logout
 Headers: Authorization: Bearer {accessToken}
 Body: {
   refreshToken: string
 }
 
 # Refresh Token
-POST   /api/auth/refresh
+POST   auth/refresh
 Body: {
   refreshToken: string
 }
@@ -786,14 +786,14 @@ Response: {
 }
 
 # Get Current User
-GET    /api/auth/me
+GET    auth/me
 Headers: Authorization: Bearer {accessToken}
 Response: {
   user: User
 }
 
 # Update Profile
-PUT    /api/auth/profile
+PUT    auth/profile
 Headers: Authorization: Bearer {accessToken}
 Body: {
   name?: string,
@@ -802,7 +802,7 @@ Body: {
 }
 
 # Change Password
-POST   /api/auth/change-password
+POST   auth/change-password
 Headers: Authorization: Bearer {accessToken}
 Body: {
   currentPassword: string,
@@ -810,7 +810,7 @@ Body: {
 }
 
 # Forgot Password
-POST   /api/auth/forgot-password
+POST   auth/forgot-password
 Body: {
   email: string
 }
@@ -819,62 +819,62 @@ Response: {
 }
 
 # Reset Password
-POST   /api/auth/reset-password
+POST   auth/reset-password
 Body: {
   token: string,
   newPassword: string
 }
 
 # Verify Email
-GET    /api/auth/verify-email/:token
+GET    auth/verify-email/:token
 ```
 
 ### 1. Shops
 
 ```
-POST   /api/shops                          # Tạo shop mới
-GET    /api/shops                          # Danh sách shops
-GET    /api/shops/:slug                    # Chi tiết shop
-PUT    /api/shops/:id                      # Cập nhật shop
-DELETE /api/shops/:id                      # Xóa shop
+POST   shops                          # Tạo shop mới
+GET    shops                          # Danh sách shops
+GET    shops/:slug                    # Chi tiết shop
+PUT    shops/:id                      # Cập nhật shop
+DELETE shops/:id                      # Xóa shop
 
 # Stripe Connect Onboarding
-POST   /api/shops/:id/connect/onboard      # Bắt đầu KYC
-GET    /api/shops/:id/connect/status       # Kiểm tra KYC status
-POST   /api/shops/:id/connect/refresh      # Refresh onboarding link
-GET    /api/shops/:id/dashboard            # Stripe Dashboard link
+POST   shops/:id/connect/onboard      # Bắt đầu KYC
+GET    shops/:id/connect/status       # Kiểm tra KYC status
+POST   shops/:id/connect/refresh      # Refresh onboarding link
+GET    shops/:id/dashboard            # Stripe Dashboard link
 ```
 
 ### 2. Products
 
 ```
-GET    /api/products                       # Tất cả products
-GET    /api/products/:id                   # Chi tiết product
-GET    /api/shops/:shopSlug/products       # Products của shop
+GET    products                       # Tất cả products
+GET    products/:id                   # Chi tiết product
+GET    shops/:shopSlug/products       # Products của shop
 
 # Shop owner only
-POST   /api/shops/:shopId/products         # Tạo product
-PUT    /api/products/:id                   # Cập nhật product
-DELETE /api/products/:id                   # Xóa product
+POST   shops/:shopId/products         # Tạo product
+PUT    products/:id                   # Cập nhật product
+DELETE products/:id                   # Xóa product
 ```
 
 ### 3. Shipping
 
 ```
 # Shipping Zones
-GET    /api/shops/:shopId/shipping/zones         # Danh sách zones
-POST   /api/shops/:shopId/shipping/zones         # Tạo zone
-PUT    /api/shipping/zones/:id                   # Cập nhật zone
-DELETE /api/shipping/zones/:id                   # Xóa zone
+GET    shops/:shopId/shipping/zones         # Danh sách zones
+POST   shops/:shopId/shipping/zones         # Tạo zone
+PUT    shipping/zones/:id                   # Cập nhật zone
+DELETE shipping/zones/:id                   # Xóa zone
 
 # Shipping Rates
-GET    /api/shipping/zones/:zoneId/rates         # Danh sách rates
-POST   /api/shipping/zones/:zoneId/rates         # Tạo rate
-PUT    /api/shipping/rates/:id                   # Cập nhật rate
-DELETE /api/shipping/rates/:id                   # Xóa rate
+GET    shipping/zones/:zoneId/rates         # Danh sách rates
+POST   shipping/zones/:zoneId/rates         # Tạo rate
+PUT    shipping/rates/:id                   # Cập nhật rate
+DELETE shipping/rates/:id                   # Xóa rate
 
 # Calculate shipping
-POST   /api/shipping/calculate
+POST   shipping/calculate
 Body: {
   shopId: string,
   productId: string,
@@ -895,7 +895,7 @@ Response: {
 
 ```
 # Tạo checkout session
-POST   /api/checkout/create-session
+POST   checkout/create-session
 Body: {
   productId: string,
   billingCycle: "one_time" | "weekly" | "monthly" | "yearly",
@@ -907,10 +907,10 @@ Response: {
 }
 
 # Load checkout session
-GET    /api/checkout/sessions/:sessionId
+GET    checkout/sessions/:sessionId
 
 # Step 1: Save customer info
-POST   /api/checkout/sessions/:sessionId/information
+POST   checkout/sessions/:sessionId/information
 Body: {
   email: string,
   name: string,
@@ -927,13 +927,13 @@ Body: {
 }
 
 # Step 2: Select shipping method
-POST   /api/checkout/sessions/:sessionId/shipping
+POST   checkout/sessions/:sessionId/shipping
 Body: {
   shippingRateId: string
 }
 
 # Step 3: Create payment
-POST   /api/checkout/sessions/:sessionId/payment
+POST   checkout/sessions/:sessionId/payment
 Body: {
   paymentMethod: "stripe"
 }
@@ -945,43 +945,43 @@ Response: {
 ### 5. Orders
 
 ```
-GET    /api/orders                         # User's orders
-GET    /api/orders/:orderNumber            # Order details
-GET    /api/shops/:shopId/orders           # Shop's orders (owner only)
+GET    orders                         # User's orders
+GET    orders/:orderNumber            # Order details
+GET    shops/:shopId/orders           # Shop's orders (owner only)
 
 # Order management (shop owner)
-PUT    /api/orders/:id/fulfill             # Mark as fulfilled
-PUT    /api/orders/:id/ship                # Add tracking info
+PUT    orders/:id/fulfill             # Mark as fulfilled
+PUT    orders/:id/ship                # Add tracking info
 Body: {
   trackingNumber: string,
   carrier: string,
   estimatedDelivery?: string
 }
-PUT    /api/orders/:id/cancel              # Cancel order
+PUT    orders/:id/cancel              # Cancel order
 
 # Admin
-GET    /api/admin/orders                   # All orders
+GET    admin/orders                   # All orders
 ```
 
 ### 6. Subscriptions
 
 ```
-GET    /api/subscriptions                  # User's subscriptions
-GET    /api/subscriptions/:id              # Subscription details
-POST   /api/subscriptions/:id/cancel       # Cancel subscription
-POST   /api/subscriptions/:id/resume       # Resume subscription
-PUT    /api/subscriptions/:id/change-plan  # Change billing cycle
-PUT    /api/subscriptions/:id/update-address  # Update shipping address
+GET    subscriptions                  # User's subscriptions
+GET    subscriptions/:id              # Subscription details
+POST   subscriptions/:id/cancel       # Cancel subscription
+POST   subscriptions/:id/resume       # Resume subscription
+PUT    subscriptions/:id/change-plan  # Change billing cycle
+PUT    subscriptions/:id/update-address  # Update shipping address
 
 # Shop owner
-GET    /api/shops/:shopId/subscriptions    # Shop's subscriptions
+GET    shops/:shopId/subscriptions    # Shop's subscriptions
 ```
 
 ### 7. Payments (Webhooks)
 
 ```
-POST   /api/webhooks/stripe                # Stripe webhook
-POST   /api/webhooks/stripe-connect        # Stripe Connect webhook
+POST   webhooks/stripe                # Stripe webhook
+POST   webhooks/stripe-connect        # Stripe Connect webhook
 ```
 
 ---
@@ -992,7 +992,7 @@ POST   /api/webhooks/stripe-connect        # Stripe Connect webhook
 
 ```typescript
 // Step 1: Shop Owner đăng ký
-POST /api/shops
+POST shops
 {
   name: "My Fashion Store",
   email: "owner@example.com",
@@ -1007,7 +1007,7 @@ Response: {
 }
 
 // Step 2: Bắt đầu KYC với Stripe Connect
-POST /api/shops/{shopId}/connect/onboard
+POST shops/{shopId}/connect/onboard
 
 Backend logic:
 1. Create Stripe Connected Account (type: 'express')
@@ -1034,7 +1034,7 @@ WHERE id = shopId
 
 ```typescript
 // Shop Owner tạo product
-POST /api/shops/{shopId}/products
+POST shops/{shopId}/products
 {
   name: "Premium Leather Jacket",
   basePrice: 199.99,
@@ -1054,7 +1054,7 @@ Response: {
 }
 
 // Tạo Checkout URL
-POST /api/checkout/create-session
+POST checkout/create-session
 {
   productId: "product-uuid",
   billingCycle: "one_time"  // or "monthly" for subscription
@@ -1072,7 +1072,7 @@ Response: {
 
 ```typescript
 // Customer mở checkout URL
-GET /api/checkout/sessions/cs_abc123xyz
+GET checkout/sessions/cs_abc123xyz
 
 Response: {
   sessionId: "cs_abc123xyz",
@@ -1090,7 +1090,7 @@ Response: {
 }
 
 // Customer điền thông tin
-POST /api/checkout/sessions/cs_abc123xyz/information
+POST checkout/sessions/cs_abc123xyz/information
 {
   email: "customer@example.com",
   name: "John Doe",
@@ -1116,7 +1116,7 @@ Response: {
 
 ```typescript
 // Load available shipping methods
-GET /api/shipping/calculate?sessionId=cs_abc123xyz
+GET shipping/calculate?sessionId=cs_abc123xyz
 
 Backend logic:
 1. Get checkout session
@@ -1144,7 +1144,7 @@ Response: {
 }
 
 // Customer chọn shipping method
-POST /api/checkout/sessions/cs_abc123xyz/shipping
+POST checkout/sessions/cs_abc123xyz/shipping
 {
   shippingRateId: "rate-1"
 }
@@ -1162,7 +1162,7 @@ Response: {
 
 ```typescript
 // Create Stripe Checkout
-POST /api/checkout/sessions/cs_abc123xyz/payment
+POST checkout/sessions/cs_abc123xyz/payment
 {
   paymentMethod: "stripe"
 }
@@ -1239,7 +1239,7 @@ Response: {
 
 ```typescript
 // Stripe Webhook: checkout.session.completed
-POST /api/webhooks/stripe
+POST webhooks/stripe
 {
   type: "checkout.session.completed",
   data: {
@@ -1313,10 +1313,10 @@ async handleCheckoutCompleted(stripeSession) {
 
 ```typescript
 // Shop owner marks order as fulfilled
-PUT /api/orders/{orderId}/fulfill
+PUT orders/{orderId}/fulfill
 
 // Shop owner adds tracking info
-PUT /api/orders/{orderId}/ship
+PUT orders/{orderId}/ship
 {
   trackingNumber: "1Z999AA10123456784",
   carrier: "UPS",
@@ -1340,7 +1340,7 @@ await sendShippingNotification(order);
 
 ```typescript
 // Stripe Webhook: invoice.paid
-POST /api/webhooks/stripe
+POST webhooks/stripe
 {
   type: "invoice.paid",
   data: {
@@ -2334,7 +2334,7 @@ export default function ShopOwnerRegisterPage() {
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import * as authApi from '@/lib/api/auth';
+import * as authApi from '@/libauth';
 
 interface User {
   id: string;
@@ -2527,7 +2527,7 @@ export default function CheckoutPage({ params }: { params: { sessionId: string }
   }, [searchParams]);
 
   async function loadSession() {
-    const response = await fetch(`/api/checkout/sessions/${params.sessionId}`);
+    const response = await fetch(`checkout/sessions/${params.sessionId}`);
     const data = await response.json();
     setSession(data);
     setCurrentStep(data.currentStep);
@@ -2590,7 +2590,7 @@ export function InformationStep({ session, onComplete }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch(`/api/checkout/sessions/${session.sessionId}/information`, {
+    const response = await fetch(`checkout/sessions/${session.sessionId}/information`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
@@ -2761,7 +2761,7 @@ export function ShippingStep({ session, onComplete }) {
   }, []);
 
   async function loadShippingRates() {
-    const response = await fetch(`/api/shipping/calculate?sessionId=${session.sessionId}`);
+    const response = await fetch(`shipping/calculate?sessionId=${session.sessionId}`);
     const data = await response.json();
     setShippingRates(data.rates);
     setLoading(false);
@@ -2775,7 +2775,7 @@ export function ShippingStep({ session, onComplete }) {
       return;
     }
 
-    const response = await fetch(`/api/checkout/sessions/${session.sessionId}/shipping`, {
+    const response = await fetch(`checkout/sessions/${session.sessionId}/shipping`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ shippingRateId: selectedRate.id })
@@ -2861,7 +2861,7 @@ export function PaymentStep({ session }) {
     setLoading(true);
 
     // Create Stripe Checkout Session
-    const response = await fetch(`/api/checkout/sessions/${session.sessionId}/payment`, {
+    const response = await fetch(`checkout/sessions/${session.sessionId}/payment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paymentMethod: 'stripe' })

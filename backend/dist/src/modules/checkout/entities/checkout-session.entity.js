@@ -128,7 +128,11 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
-], CheckoutSession.prototype, "paymentIntentId", void 0);
+], CheckoutSession.prototype, "stripePaymentIntentId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], CheckoutSession.prototype, "stripeAccountId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ default: 1 }),
     __metadata("design:type", Number)

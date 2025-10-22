@@ -6,12 +6,14 @@ export interface CheckoutSession {
   product: {
     id: string;
     name: string;
+    shopName: string;
     description?: string;
     price: number;
     images: string[];
     shop: {
       name: string;
       logo?: string;
+      stripeAccountId?: string;
     };
     productType: 'physical' | 'digital';
     requiresShipping: boolean;
@@ -32,6 +34,7 @@ export interface CheckoutSession {
   totalAmount?: number;
   billingCycle: 'one_time' | 'weekly' | 'monthly' | 'yearly';
   status: 'pending' | 'completed' | 'expired' | 'abandoned';
+  stripeAccountId?: string;
 }
 
 export interface ShippingRate {
@@ -74,27 +77,52 @@ export const checkoutApi = {
   },
 
   async getSession(sessionId: string): Promise<CheckoutSession> {
-    const response = await api.get(`/checkout/sessions/${sessionId}`);
-    return response.data;
+    const response = await api.get(`/checkout/${sessionId}`);
+    const responseData = response.data.data || response.data;
+
+    // Handle case where product might be null
+    if (!responseData.product) {
+      throw new Error('Product not found in checkout session');
+    }
+
+    // Transform backend response to match frontend interface
+    return {
+      ...responseData,
+      product: {
+        ...responseData.product,
+        price: parseFloat(responseData.product.price),
+        productType: responseData.product.type as 'physical' | 'digital' | 'subscription',
+        requiresShipping: responseData.product.requiresShipping ?? responseData.product.productType === 'physical',
+        shopName: responseData.shop?.name || 'Unknown Shop',
+        shop: {
+          name: responseData.shop?.name || 'Unknown Shop',
+          logo: responseData.shop?.logo,
+          stripeAccountId: responseData.shop?.stripeAccountId || responseData.stripeAccountId
+        }
+      },
+      stripeAccountId: responseData.shop?.stripeAccountId || responseData.stripeAccountId
+    };
   },
 
   async saveInformation(sessionId: string, data: SaveInformationRequest) {
     const response = await api.post(`/checkout/sessions/${sessionId}/information`, data);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   async selectShipping(sessionId: string, data: SelectShippingRequest) {
+    // Always call backend API to ensure currentStep is updated
     const response = await api.post(`/checkout/sessions/${sessionId}/shipping`, data);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   async createPayment(sessionId: string, data: { paymentMethod: string }) {
     const response = await api.post(`/checkout/sessions/${sessionId}/payment`, data);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   async calculateShipping(sessionId: string): Promise<{ rates: ShippingRate[] }> {
-    const response = await api.get(`/shipping/calculate?sessionId=${sessionId}`);
-    return response.data;
+    const response = await api.get(`/shipping/calculate/${sessionId}`);
+    const responseData = response.data.data || response.data;
+    return responseData;
   },
 };

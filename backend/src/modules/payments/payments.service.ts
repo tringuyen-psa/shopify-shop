@@ -638,7 +638,7 @@ export class PaymentsService {
         {
           status: 'completed',
           stripeCheckoutSessionId: paymentIntent.id,
-          paymentIntentId: paymentIntent.id,
+          stripePaymentIntentId: paymentIntent.id,
         },
       );
     } catch (error) {

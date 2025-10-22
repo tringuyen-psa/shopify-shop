@@ -21,7 +21,7 @@ export default function ShopPage({ params }: ShopPageProps) {
     const [sortBy, setSortBy] = useState('createdAt');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-        const { data: shop, loading: shopLoading, error: shopError } = useShop(slug);
+    const { data: shop, loading: shopLoading, error: shopError } = useShop(slug);
     const { data: shopProducts, loading: productsLoading } = useShopProductsData(slug);
 
     // Filter and sort products
@@ -317,7 +317,7 @@ export default function ShopPage({ params }: ShopPageProps) {
                                                             💻 Digital
                                                         </span>
                                                     )}
-                                                    {product.compareAtPrice && parseFloat(product.compareAtPrice) > parseFloat(product.basePrice) && (
+                                                    {product.compareAtPrice && product.compareAtPrice > product.basePrice && (
                                                         <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
                                                             🔥 Sale
                                                         </span>
@@ -336,9 +336,9 @@ export default function ShopPage({ params }: ShopPageProps) {
                                                     <span className="text-2xl font-bold text-green-600">
                                                         ${typeof product.basePrice === 'number' ? product.basePrice.toFixed(2) : parseFloat(product.basePrice || '0').toFixed(2)}
                                                     </span>
-                                                    {product.compareAtPrice && parseFloat(product.compareAtPrice) > parseFloat(product.basePrice) && (
+                                                    {product.compareAtPrice && typeof product.compareAtPrice === 'number' && product.compareAtPrice > (typeof product.basePrice === 'number' ? product.basePrice : parseFloat(product.basePrice || '0')) && (
                                                         <span className="ml-2 text-sm text-gray-500 line-through">
-                                                            ${typeof product.compareAtPrice === 'number' ? product.compareAtPrice.toFixed(2) : parseFloat(product.compareAtPrice || '0').toFixed(2)}
+                                                            ${product.compareAtPrice.toFixed(2)}
                                                         </span>
                                                     )}
                                                 </div>

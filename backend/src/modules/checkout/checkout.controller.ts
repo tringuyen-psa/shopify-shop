@@ -9,18 +9,24 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { CheckoutService } from './checkout.service';
+import { OrdersService } from '../orders/orders.service';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
 import { SaveInformationDto } from './dto/save-information.dto';
 import { SelectShippingDto } from './dto/select-shipping.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 
 @ApiTags('checkout')
 @Controller('checkout')
 export class CheckoutController {
-  constructor(private readonly checkoutService: CheckoutService) {}
+  constructor(
+    private readonly checkoutService: CheckoutService,
+    private readonly ordersService: OrdersService,
+  ) {}
 
   @Post('create-session')
   @ApiOperation({ summary: 'Create checkout session' })
@@ -147,6 +153,27 @@ export class CheckoutController {
     }
   }
 
+  @Post('create-payment-intent')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Create payment intent for direct card payments' })
+  @ApiResponse({ status: 200, description: 'Payment intent created successfully' })
+  @ApiResponse({ status: 400, description: 'Payment intent creation failed' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
+  async createPaymentIntent(@Body() createPaymentIntentDto: CreatePaymentIntentDto) {
+    try {
+      const result = await this.checkoutService.createPaymentIntent(createPaymentIntentDto);
+      return {
+        success: true,
+        data: result,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message);
+    }
+  }
+
   @Get('sessions/:sessionId/summary')
   @ApiOperation({ summary: 'Get checkout summary with all details' })
   @ApiParam({ name: 'sessionId', description: 'Public session ID' })
@@ -205,6 +232,60 @@ export class CheckoutController {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('update-session-status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update checkout session status (webhook)' })
+  @ApiResponse({ status: 200, description: 'Session status updated successfully' })
+  async updateSessionStatus(@Body() body: { sessionId: string; status: string }) {
+    try {
+      await this.checkoutService.updateSessionStatus(body.sessionId, body.status);
+      return {
+        success: true,
+        message: 'Session status updated successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Post('update-session-by-stripe-id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update checkout session status by Stripe ID (webhook)' })
+  @ApiResponse({ status: 200, description: 'Session status updated successfully' })
+  async updateSessionByStripeId(@Body() body: { stripeSessionId: string; status: string }) {
+    try {
+      await this.checkoutService.updateSessionByStripeId(body.stripeSessionId, body.status);
+
+      // If payment is completed, create order
+      if (body.status === 'completed') {
+        try {
+          console.log('Payment completed, creating order for Stripe session:', body.stripeSessionId);
+
+          // Find checkout session by Stripe session ID
+          const checkoutSession = await this.checkoutService.findByStripeSessionId(body.stripeSessionId);
+
+          if (checkoutSession) {
+            // Create order from checkout session
+            const order = await this.ordersService.createOrderFromCheckoutSession(checkoutSession.sessionId);
+            console.log('Order created successfully:', order.orderNumber);
+          } else {
+            console.log('Checkout session not found for Stripe session:', body.stripeSessionId);
+          }
+        } catch (orderError) {
+          console.error('Failed to create order from checkout session:', orderError);
+          // Don't fail the webhook if order creation fails
+        }
+      }
+
+      return {
+        success: true,
+        message: 'Session status updated successfully',
+      };
+    } catch (error) {
       throw new BadRequestException(error.message);
     }
   }

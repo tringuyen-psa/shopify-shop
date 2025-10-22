@@ -53,6 +53,12 @@ let ShopsService = class ShopsService {
         }
         return shop;
     }
+    async findByOwner(userId) {
+        return this.shopRepository.find({
+            where: { ownerId: userId },
+            relations: ['owner', 'products'],
+        });
+    }
     async create(shopData, userId) {
         try {
             const shop = this.shopRepository.create({
@@ -128,6 +134,9 @@ let ShopsService = class ShopsService {
             console.error('Error in findAll shops:', error);
             throw new common_1.BadRequestException(`Invalid query parameters: ${error.message}`);
         }
+    }
+    async remove(id) {
+        await this.shopRepository.delete(id);
     }
     async updateSubscriptionPlan(shopId, planData) {
         const shop = await this.findById(shopId);
@@ -254,6 +263,23 @@ let ShopsService = class ShopsService {
                 ]
             }
         ];
+    }
+    async findByStripeAccountId(stripeAccountId) {
+        return this.shopRepository.findOne({
+            where: { stripeAccountId },
+            relations: ['owner', 'products'],
+        });
+    }
+    async stripeOnboardingComplete(shopId) {
+        const shop = await this.findById(shopId);
+        if (!shop) {
+            throw new common_1.BadRequestException('Shop not found');
+        }
+        return this.shopRepository.save({
+            ...shop,
+            isActive: true,
+            status: 'active',
+        });
     }
 };
 exports.ShopsService = ShopsService;

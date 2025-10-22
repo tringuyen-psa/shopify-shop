@@ -28,9 +28,10 @@ export declare class CheckoutSession {
     totalAmount: number;
     discountAmount: number;
     stripeCheckoutSessionId: string;
-    paymentIntentId: string;
+    stripePaymentIntentId: string;
+    stripeAccountId: string;
     currentStep: number;
-    status: 'pending' | 'completed' | 'expired' | 'abandoned';
+    status: 'pending' | 'processing' | 'completed' | 'expired' | 'abandoned';
     expiresAt: Date;
     createdAt: Date;
     updatedAt: Date;

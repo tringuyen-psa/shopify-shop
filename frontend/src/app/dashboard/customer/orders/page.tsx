@@ -21,7 +21,8 @@ import {
   XCircle,
   Eye,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MoreHorizontal
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -63,8 +64,10 @@ export default function CustomerOrdersPage() {
 
   function getStatusIcon(status: string) {
     switch (status) {
+      case 'pending':
+        return <Clock className="h-4 w-4 text-orange-500" />;
       case 'unfulfilled':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Package className="h-4 w-4 text-yellow-500" />;
       case 'fulfilled':
         return <Package className="h-4 w-4 text-blue-500" />;
       case 'shipped':
@@ -80,6 +83,8 @@ export default function CustomerOrdersPage() {
 
   function getStatusColor(status: string) {
     switch (status) {
+      case 'pending':
+        return 'bg-orange-100 text-orange-800';
       case 'unfulfilled':
         return 'bg-yellow-100 text-yellow-800';
       case 'fulfilled':
@@ -93,6 +98,64 @@ export default function CustomerOrdersPage() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  }
+
+  function getStatusText(status: string) {
+    switch (status) {
+      case 'pending':
+        return 'Pending Payment';
+      case 'unfulfilled':
+        return 'Processing';
+      case 'fulfilled':
+        return 'Fulfilled';
+      case 'shipped':
+        return 'Shipped';
+      case 'delivered':
+        return 'Delivered';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  }
+
+  function OrderStatusTimeline({ order }: { order: any }) {
+    const steps = [
+      { key: 'pending', label: 'Payment', completed: order.paymentStatus === 'paid', icon: DollarSign },
+      { key: 'unfulfilled', label: 'Processing', completed: ['fulfilled', 'shipped', 'delivered'].includes(order.fulfillmentStatus), icon: Package },
+      { key: 'shipped', label: 'Shipped', completed: order.fulfillmentStatus === 'shipped' || order.fulfillmentStatus === 'delivered', icon: Truck },
+      { key: 'delivered', label: 'Delivered', completed: order.fulfillmentStatus === 'delivered', icon: CheckCircle }
+    ];
+
+    if (order.fulfillmentStatus === 'cancelled') {
+      return (
+        <div className="flex items-center space-x-2 text-red-600">
+          <XCircle className="h-4 w-4" />
+          <span className="text-sm font-medium">Order Cancelled</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center space-x-2">
+        {steps.map((step, index) => (
+          <div key={step.key} className="flex items-center">
+            <div className={`flex items-center justify-center w-6 h-6 rounded-full border-2 ${
+              step.completed
+                ? 'bg-green-500 border-green-500 text-white'
+                : 'bg-gray-100 border-gray-300 text-gray-400'
+            }`}>
+              <step.icon className="h-3 w-3" />
+            </div>
+            {index < steps.length - 1 && (
+              <div className={`w-8 h-0.5 mx-1 ${
+                steps[index + 1].completed ? 'bg-green-500' : 'bg-gray-300'
+              }`} />
+            )}
+          </div>
+        ))}
+      </div>
+    );
   }
 
   function getPaymentStatusColor(status: string) {
@@ -165,7 +228,7 @@ export default function CustomerOrdersPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -181,10 +244,10 @@ export default function CustomerOrdersPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Delivered</p>
-                <p className="text-2xl font-bold">{orders.filter(o => o.fulfillmentStatus === 'delivered').length}</p>
+                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-2xl font-bold">{orders.filter(o => o.fulfillmentStatus === 'pending' || o.fulfillmentStatus === 'unfulfilled').length}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <Clock className="h-8 w-8 text-orange-500" />
             </div>
           </CardContent>
         </Card>
@@ -196,6 +259,17 @@ export default function CustomerOrdersPage() {
                 <p className="text-2xl font-bold">{orders.filter(o => o.fulfillmentStatus === 'shipped').length}</p>
               </div>
               <Truck className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Delivered</p>
+                <p className="text-2xl font-bold">{orders.filter(o => o.fulfillmentStatus === 'delivered').length}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
@@ -236,7 +310,8 @@ export default function CustomerOrdersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="unfulfilled">Unfulfilled</SelectItem>
+                <SelectItem value="pending">Pending Payment</SelectItem>
+                <SelectItem value="unfulfilled">Processing</SelectItem>
                 <SelectItem value="fulfilled">Fulfilled</SelectItem>
                 <SelectItem value="shipped">Shipped</SelectItem>
                 <SelectItem value="delivered">Delivered</SelectItem>
@@ -314,7 +389,7 @@ export default function CustomerOrdersPage() {
                             <Badge className={getStatusColor(order.fulfillmentStatus)}>
                               <div className="flex items-center space-x-1">
                                 {getStatusIcon(order.fulfillmentStatus)}
-                                <span>{order.fulfillmentStatus}</span>
+                                <span>{getStatusText(order.fulfillmentStatus)}</span>
                               </div>
                             </Badge>
                             <Badge className={getPaymentStatusColor(order.paymentStatus)}>
@@ -322,7 +397,7 @@ export default function CustomerOrdersPage() {
                             </Badge>
                           </div>
                           <p className="text-gray-600 mb-1">{order.shopName}</p>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-3">
                             <span className="flex items-center">
                               <Calendar className="h-4 w-4 mr-1" />
                               {new Date(order.createdAt).toLocaleDateString()}
@@ -334,6 +409,11 @@ export default function CustomerOrdersPage() {
                                 Tracking: {order.trackingNumber}
                               </span>
                             )}
+                          </div>
+
+                          {/* Order Status Timeline */}
+                          <div className="mb-3">
+                            <OrderStatusTimeline order={order} />
                           </div>
                         </div>
                         <div className="text-right lg:pl-4">

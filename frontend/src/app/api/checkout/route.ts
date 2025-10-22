@@ -42,10 +42,15 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
 
+    if (!result.data || !result.data.sessionId) {
+      console.error('Invalid response structure:', result);
+      throw new Error('Invalid response from backend: missing session ID');
+    }
+
     return NextResponse.json({
       success: true,
-      sessionId: result.data.id,
-      checkoutUrl: `/checkout/${result.data.id}`,
+      sessionId: result.data.sessionId,
+      checkoutUrl: result.data.checkoutUrl || `/checkout/${result.data.sessionId}`,
     });
   } catch (error) {
     console.error('Checkout API error:', error);

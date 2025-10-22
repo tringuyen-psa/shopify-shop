@@ -7,6 +7,7 @@ import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
 import { SaveInformationDto } from './dto/save-information.dto';
 import { SelectShippingDto } from './dto/select-shipping.dto';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 export declare class CheckoutService {
     private readonly checkoutSessionRepository;
     private readonly productsService;
@@ -25,13 +26,18 @@ export declare class CheckoutService {
         requiresShipping: boolean;
     }>;
     selectShipping(sessionId: string, selectShippingDto: SelectShippingDto): Promise<{
-        shippingCost: number;
-        totalAmount: number;
+        shippingCost: any;
+        totalAmount: any;
         nextStep: number;
+    }>;
+    createPaymentIntent(createPaymentIntentDto: CreatePaymentIntentDto): Promise<{
+        clientSecret: string;
+        paymentIntentId: string;
     }>;
     createPayment(sessionId: string, createPaymentDto: CreatePaymentDto): Promise<{
         stripeCheckoutUrl: string;
-        paymentMethod: "stripe";
+        paymentMethod: "stripe_popup";
+        sessionId: string;
     }>;
     getCheckoutSummary(sessionId: string): Promise<{
         sessionId: string;
@@ -68,7 +74,7 @@ export declare class CheckoutService {
         billing: {
             cycle: "one_time" | "weekly" | "monthly" | "yearly";
         };
-        status: "pending" | "completed" | "expired" | "abandoned";
+        status: "pending" | "processing" | "completed" | "expired" | "abandoned";
         currentStep: number;
         expiresAt: Date;
     }>;
@@ -87,17 +93,22 @@ export declare class CheckoutService {
             name: string;
             slug: string;
             logo: string;
+            stripeAccountId: string;
         };
         billing: {
             cycle: "one_time" | "weekly" | "monthly" | "yearly";
         };
         currentStep: number;
         expiresAt: Date;
+        stripeAccountId: string;
     }>;
     expireSession(sessionId: string): Promise<void>;
     completeCheckoutSession(sessionId: string, paymentData: any): Promise<CheckoutSession>;
     private validateCheckoutSession;
     private calculateProductPrice;
     private generateSessionId;
+    updateSessionStatus(sessionId: string, status: string): Promise<void>;
+    updateSessionByStripeId(stripeSessionId: string, status: string): Promise<void>;
     cleanupExpiredSessions(): Promise<number>;
+    findByStripeSessionId(stripeSessionId: string): Promise<CheckoutSession | null>;
 }

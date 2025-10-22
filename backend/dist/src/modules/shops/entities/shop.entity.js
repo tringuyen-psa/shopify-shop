@@ -17,6 +17,7 @@ const order_entity_1 = require("../../orders/entities/order.entity");
 const checkout_session_entity_1 = require("../../checkout/entities/checkout-session.entity");
 const subscription_entity_1 = require("../../subscriptions/entities/subscription.entity");
 const shipping_zone_entity_1 = require("../../shipping/entities/shipping-zone.entity");
+const kyc_verification_entity_1 = require("../../stripe-connect/entities/kyc-verification.entity");
 let Shop = class Shop {
 };
 exports.Shop = Shop;
@@ -68,6 +69,42 @@ __decorate([
     (0, typeorm_1.Column)({ default: false }),
     __metadata("design:type", Boolean)
 ], Shop.prototype, "stripePayoutsEnabled", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 50, default: 'none' }),
+    __metadata("design:type", String)
+], Shop.prototype, "kycStatus", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date', nullable: true }),
+    __metadata("design:type", Date)
+], Shop.prototype, "kycSubmittedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date', nullable: true }),
+    __metadata("design:type", Date)
+], Shop.prototype, "kycVerifiedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'date', nullable: true }),
+    __metadata("design:type", Date)
+], Shop.prototype, "kycRejectedAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Shop.prototype, "kycRejectionReason", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], Shop.prototype, "kycRequirements", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], Shop.prototype, "kycCapabilities", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], Shop.prototype, "hasValidKyc", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    __metadata("design:type", String)
+], Shop.prototype, "currentKycVerificationId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 5, scale: 2, default: 15.00 }),
     __metadata("design:type", Number)
@@ -161,6 +198,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => shipping_zone_entity_1.ShippingZone, zone => zone.shop),
     __metadata("design:type", Array)
 ], Shop.prototype, "shippingZones", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => kyc_verification_entity_1.KycVerification, kycVerification => kycVerification.shop),
+    __metadata("design:type", Array)
+], Shop.prototype, "kycVerifications", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: 'varchar',

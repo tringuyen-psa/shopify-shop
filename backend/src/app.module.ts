@@ -13,6 +13,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { HealthModule } from './modules/health/health.module';
+import { StripeConnectModule } from './modules/stripe-connect/stripe-connect.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { HealthModule } from './modules/health/health.module';
     PaymentsModule,
     PlatformModule,
     HealthModule,
+    // StripeConnectModule, // Temporarily disabled due to compilation errors
   ],
   controllers: [AppController],
   providers: [],

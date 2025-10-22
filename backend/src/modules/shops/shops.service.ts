@@ -59,6 +59,13 @@ export class ShopsService {
     return shop;
   }
 
+  async findByOwner(userId: string): Promise<Shop[]> {
+    return this.shopRepository.find({
+      where: { ownerId: userId },
+      relations: ['owner', 'products'],
+    });
+  }
+
   async create(shopData: Partial<Shop>, userId: string): Promise<Shop> {
     try {
       // Set owner ID from authenticated user
@@ -166,6 +173,10 @@ export class ShopsService {
       console.error('Error in findAll shops:', error);
       throw new BadRequestException(`Invalid query parameters: ${error.message}`);
     }
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.shopRepository.delete(id);
   }
 
   // Subscription plan methods
@@ -309,5 +320,33 @@ export class ShopsService {
         ]
       }
     ];
+  }
+
+  /**
+   * Find shop by Stripe account ID
+   */
+  async findByStripeAccountId(stripeAccountId: string): Promise<Shop> {
+    return this.shopRepository.findOne({
+      where: { stripeAccountId },
+      relations: ['owner', 'products'],
+    });
+  }
+
+  /**
+   * Mark shop as active when Stripe onboarding is complete
+   */
+  async stripeOnboardingComplete(shopId: string): Promise<Shop> {
+    const shop = await this.findById(shopId);
+
+    if (!shop) {
+      throw new BadRequestException('Shop not found');
+    }
+
+    // Update shop to active when onboarding is complete
+    return this.shopRepository.save({
+      ...shop,
+      isActive: true,
+      status: 'active',
+    });
   }
 }

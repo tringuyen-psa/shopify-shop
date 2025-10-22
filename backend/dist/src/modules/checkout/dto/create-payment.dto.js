@@ -15,7 +15,7 @@ class CreatePaymentDto {
 }
 exports.CreatePaymentDto = CreatePaymentDto;
 __decorate([
-    (0, class_validator_1.IsEnum)(['stripe']),
+    (0, class_validator_1.IsEnum)(['stripe_popup', 'paypal', 'stripe_card']),
     __metadata("design:type", String)
 ], CreatePaymentDto.prototype, "paymentMethod", void 0);
 //# sourceMappingURL=create-payment.dto.js.map

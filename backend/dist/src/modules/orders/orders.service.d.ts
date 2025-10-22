@@ -102,4 +102,5 @@ export declare class OrdersService {
     private generateOrderNumber;
     private calculatePlatformFee;
     private getTopShops;
+    createOrderFromCheckoutSession(checkoutSessionId: string): Promise<Order>;
 }

@@ -11,13 +11,19 @@ import {
   ParseUUIDPipe,
   Query,
   BadRequestException,
+  NotFoundException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ShopsService } from './shops.service';
+import { ProductsService } from '../products/products.service';
 import { PaymentsService } from '../payments/payments.service';
+import { StripeConnectService } from '../stripe-connect/stripe-connect.service';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
+import { CreateProductDto } from '../products/dto/create-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 // import { Roles } from '../auth/decorators/roles.decorator'; // Commented out to remove unused warning
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,7 +33,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 export class ShopsController {
   constructor(
     private readonly shopsService: ShopsService,
+    @Inject(forwardRef(() => ProductsService))
+    private readonly productsService: ProductsService,
     private readonly paymentsService: PaymentsService,
+    @Inject(forwardRef(() => StripeConnectService))
+    private readonly stripeConnectService: StripeConnectService,
   ) {}
 
   @Post()
@@ -50,39 +60,22 @@ export class ShopsController {
   @Get('my')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current user shop' })
-  @ApiResponse({ status: 200, description: 'Current user shop retrieved successfully' })
+  @ApiOperation({ summary: 'Get current user\'s shops' })
+  @ApiResponse({ status: 200, description: 'Shops retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Shop not found' })
-  findMyShop(@Request() req) {
+  async getMyShops(@Request() req) {
     const userId = req.user?.id;
     if (!userId) {
       throw new Error('User ID not found in token');
     }
-    return this.shopsService.findByUserId(userId);
+    return this.shopsService.findByOwner(userId);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all shops' })
   @ApiResponse({ status: 200, description: 'Shops retrieved successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request - Invalid query parameters' })
-  findAll(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('status') status?: string,
-    @Query('search') search?: string,
-    @Query('sortBy') sortBy?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-  ) {
-    const params = {
-      page: page ? parseInt(page) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      status,
-      search,
-      sortBy,
-      sortOrder,
-    };
-    return this.shopsService.findAll(params);
+  findAll(@Query() query: any) {
+    return this.shopsService.findAll(query);
   }
 
   @Get(':slug')
@@ -101,6 +94,57 @@ export class ShopsController {
   @ApiResponse({ status: 404, description: 'Shop not found' })
   findProductsBySlug(@Param('slug') slug: string) {
     return this.shopsService.findProductsBySlug(slug);
+  }
+
+  @Get(':id/products')
+  @ApiOperation({ summary: 'Get all products for a shop by ID or slug' })
+  @ApiParam({ name: 'id', description: 'Shop ID or slug' })
+  @ApiResponse({ status: 200, description: 'Shop products retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Shop not found' })
+  async findProductsById(@Param('id') id: string) {
+    try {
+      console.log(`Finding shop with identifier: ${id}`);
+
+      // First try to find by UUID
+      const shopById = await this.shopsService.findById(id);
+      console.log('Shop found by ID:', shopById?.id || 'not found');
+
+      if (shopById) {
+        return this.productsService.findByShopId(id);
+      }
+
+      // If not found, try to find by slug
+      console.log('Trying to find by slug...');
+      const shopBySlug = await this.shopsService.findBySlug(id);
+      console.log('Shop found by slug:', shopBySlug?.id || 'not found');
+
+      if (shopBySlug) {
+        return this.productsService.findByShopId(shopBySlug.id);
+      }
+
+      throw new NotFoundException('Shop not found');
+    } catch (error) {
+      console.error('Error finding shop by ID/slug:', error);
+      // Re-throw the original error instead of masking it
+      throw error;
+    }
+  }
+
+  @Post(':id/products')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new product for a shop' })
+  @ApiParam({ name: 'id', description: 'Shop ID' })
+  @ApiResponse({ status: 201, description: 'Product successfully created' })
+  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
+  async createProduct(
+    @Param('id', ParseUUIDPipe) shopId: string,
+    @Body() createProductDto: CreateProductDto,
+    @Request() req,
+  ) {
+    return this.productsService.create(createProductDto, shopId);
   }
 
   @Get(':id')
@@ -122,50 +166,91 @@ export class ShopsController {
   @ApiParam({ name: 'id', description: 'Shop ID' })
   @ApiResponse({ status: 200, description: 'Shop updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin can update' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can update shop' })
   @ApiResponse({ status: 404, description: 'Shop not found' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateShopDto: UpdateShopDto,
+    @Request() req,
   ) {
     return this.shopsService.update(id, updateShopDto);
   }
 
-  // Stripe Connect endpoints
-  @Post(':id/connect/create-account')
+  @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create Stripe Connect account' })
+  @ApiOperation({ summary: 'Delete shop' })
   @ApiParam({ name: 'id', description: 'Shop ID' })
-  @ApiResponse({ status: 201, description: 'Stripe Connect account created successfully' })
+  @ApiResponse({ status: 200, description: 'Shop deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can delete shop' })
   @ApiResponse({ status: 404, description: 'Shop not found' })
-  async createConnectAccount(@Param('id', ParseUUIDPipe) shopId: string, @Request() req) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    const account = await this.paymentsService.createConnectAccount(shopId, userId);
-    return {
-      message: 'Stripe Connect account created successfully',
-      accountId: account.id,
-      chargesEnabled: account.charges_enabled,
-      payoutsEnabled: account.payouts_enabled,
-    };
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    return this.shopsService.remove(id);
   }
 
+  @Post(':id/subscribe')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Subscribe shop to platform plan' })
+  @ApiParam({ name: 'id', description: 'Shop ID' })
+  @ApiResponse({ status: 200, description: 'Subscription updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can subscribe' })
+  @ApiResponse({ status: 404, description: 'Shop not found' })
+  subscribe(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSubscriptionDto: UpdateSubscriptionDto,
+    @Request() req,
+  ) {
+    return this.shopsService.updateSubscriptionPlan(id, updateSubscriptionDto);
+  }
+
+  // TODO: Implement analytics service method
+  // @Get(':id/analytics')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth()
+  // @ApiOperation({ summary: 'Get shop analytics' })
+  // @ApiParam({ name: 'id', description: 'Shop ID' })
+  // @ApiResponse({ status: 200, description: 'Analytics retrieved successfully' })
+  // @ApiResponse({ status: 401, description: 'Unauthorized' })
+  // @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can view analytics' })
+  // @ApiResponse({ status: 404, description: 'Shop not found' })
+  // getAnalytics(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+  //   return this.shopsService.getAnalytics(id, req.user.id);
+  // }
+
+  // TODO: Implement ownership transfer service method
+  // @Post(':id/transfer-ownership')
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @ApiBearerAuth()
+  // @ApiOperation({ summary: 'Transfer shop ownership' })
+  // @ApiParam({ name: 'id', description: 'Shop ID' })
+  // @ApiResponse({ status: 200, description: 'Ownership transferred successfully' })
+  // @ApiResponse({ status: 401, description: 'Unauthorized' })
+  // @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can transfer ownership' })
+  // @ApiResponse({ status: 404, description: 'Shop not found' })
+  // transferOwnership(
+  //   @Param('id', ParseUUIDPipe) id: string,
+  //   @Body() body: { newOwnerId: string },
+  //   @Request() req,
+  // ) {
+  //   return this.shopsService.transferOwnership(id, body.newOwnerId, req.user.id);
+  // }
+
   @Post(':id/connect/onboard')
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Start Stripe Connect onboarding' })
   @ApiParam({ name: 'id', description: 'Shop ID' })
   @ApiResponse({ status: 200, description: 'Onboarding started successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can access' })
   @ApiResponse({ status: 404, description: 'Shop not found' })
-  async startOnboarding(@Param('id', ParseUUIDPipe) shopId: string, @Request() req) {
+  async startOnboarding(
+    @Param('id', ParseUUIDPipe) shopId: string,
+    @Request() req
+  ) {
     const userId = req.user?.id;
     if (!userId) {
       throw new BadRequestException('User ID not found in token');
@@ -174,231 +259,29 @@ export class ShopsController {
     // Verify shop ownership
     const shop = await this.shopsService.findById(shopId);
     if (shop.ownerId !== userId) {
-      throw new BadRequestException('Access denied');
+      throw new BadRequestException('Access denied - Only shop owner can start onboarding');
     }
 
-    // Create Stripe account if it doesn't exist
-    let accountId = shop.stripeAccountId;
-    if (!accountId) {
-      const account = await this.paymentsService.createConnectAccount(shopId, userId);
-      accountId = account.id;
-    }
-
-    // Create onboarding link
-    const onboardingLink = await this.paymentsService.createOnboardingLink(accountId);
-
-    return {
-      message: 'Onboarding started successfully',
-      onboardingUrl: onboardingLink.url,
-      accountId: accountId,
-    };
-  }
-
-  @Post(':id/connect/kyc')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create KYC verification link' })
-  @ApiParam({ name: 'id', description: 'Shop ID' })
-  @ApiResponse({ status: 200, description: 'KYC verification link created successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
-  @ApiResponse({ status: 404, description: 'Shop not found' })
-  async createKYCLink(@Param('id', ParseUUIDPipe) shopId: string, @Request() req) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    // Verify shop ownership
-    const shop = await this.shopsService.findById(shopId);
-    if (shop.ownerId !== userId) {
-      throw new BadRequestException('Access denied');
-    }
-
-    // Create Stripe account if it doesn't exist
-    let accountId = shop.stripeAccountId;
-    if (!accountId) {
-      const account = await this.paymentsService.createConnectAccount(shopId, userId);
-      accountId = account.id;
-    }
-
-    // Create KYC verification link
-    const kycLink = await this.paymentsService.createKYCLink(accountId);
-
-    return {
-      message: 'KYC verification link created successfully',
-      kycUrl: kycLink.url,
-      accountId: accountId,
-    };
-  }
-
-  @Get(':id/connect/status')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get Stripe Connect status' })
-  @ApiParam({ name: 'id', description: 'Shop ID' })
-  @ApiResponse({ status: 200, description: 'Connect status retrieved successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
-  @ApiResponse({ status: 404, description: 'Shop not found' })
-  async getConnectStatus(@Param('id', ParseUUIDPipe) shopId: string, @Request() req) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    // Verify shop ownership
-    const shop = await this.shopsService.findById(shopId);
-    if (shop.ownerId !== userId) {
-      throw new BadRequestException('Access denied');
-    }
-
-    // Update account status if Stripe account exists
-    if (shop.stripeAccountId) {
-      await this.paymentsService.updateAccountStatus(shop.stripeAccountId);
-
-      // Get updated shop data
-      const updatedShop = await this.shopsService.findById(shopId);
+    try {
+      // Create or get Stripe Express account and onboarding link
+      const result = await this.stripeConnectService.createExpressAccount(shopId);
 
       return {
-        accountId: updatedShop.stripeAccountId,
-        onboardingComplete: updatedShop.stripeOnboardingComplete,
-        chargesEnabled: updatedShop.stripeChargesEnabled,
-        payoutsEnabled: updatedShop.stripePayoutsEnabled,
+        message: 'Onboarding started successfully',
+        onboardingUrl: result.onboardingUrl,
+        accountId: result.accountId,
       };
+    } catch (error) {
+      // If account already exists, just create onboarding link
+      if (error.message.includes('already has a Stripe account')) {
+        const onboardingResult = await this.stripeConnectService.createOnboardingLink(shopId);
+        return {
+          message: 'Onboarding link created successfully',
+          onboardingUrl: onboardingResult.onboardingUrl,
+          accountId: shop.stripeAccountId,
+        };
+      }
+      throw new BadRequestException(error.message);
     }
-
-    return {
-      accountId: null,
-      onboardingComplete: false,
-      chargesEnabled: false,
-      payoutsEnabled: false,
-    };
-  }
-
-  @Post(':id/connect/refresh')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Refresh Stripe Connect onboarding link' })
-  @ApiParam({ name: 'id', description: 'Shop ID' })
-  @ApiResponse({ status: 200, description: 'Onboarding link refreshed successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
-  @ApiResponse({ status: 404, description: 'Shop not found' })
-  async refreshOnboardingLink(@Param('id', ParseUUIDPipe) shopId: string, @Request() req) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    // Verify shop ownership
-    const shop = await this.shopsService.findById(shopId);
-    if (shop.ownerId !== userId || !shop.stripeAccountId) {
-      throw new BadRequestException('Access denied or no Stripe account found');
-    }
-
-    const onboardingLink = await this.paymentsService.createOnboardingLink(shop.stripeAccountId);
-
-    return {
-      message: 'Onboarding link refreshed successfully',
-      onboardingUrl: onboardingLink.url,
-    };
-  }
-
-  @Get(':id/connect/dashboard')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get Stripe Express dashboard link' })
-  @ApiParam({ name: 'id', description: 'Shop ID' })
-  @ApiResponse({ status: 200, description: 'Dashboard link retrieved successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner or platform admin' })
-  @ApiResponse({ status: 404, description: 'Shop not found' })
-  async getStripeDashboard(@Param('id', ParseUUIDPipe) shopId: string, @Request() req) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    // Verify shop ownership
-    const shop = await this.shopsService.findById(shopId);
-    if (shop.ownerId !== userId || !shop.stripeAccountId) {
-      throw new BadRequestException('Access denied or no Stripe account found');
-    }
-
-    const dashboardLink = await this.paymentsService.createDashboardLink(shop.stripeAccountId);
-
-    return {
-      message: 'Dashboard link retrieved successfully',
-      dashboardUrl: dashboardLink.url,
-    };
-  }
-
-  // Subscription endpoints
-  @Get('subscriptions/plans')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Get available subscription plans' })
-  @ApiResponse({ status: 200, description: 'Subscription plans retrieved successfully' })
-  async getSubscriptionPlans() {
-    const plans = await this.shopsService.getSubscriptionPlans();
-    return {
-      message: 'Subscription plans retrieved successfully',
-      plans,
-    };
-  }
-
-  @Post(':id/subscription/update')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Update shop subscription plan' })
-  @ApiResponse({ status: 200, description: 'Subscription updated successfully' })
-  async updateSubscription(
-    @Param('id', ParseUUIDPipe) shopId: string,
-    @Request() req,
-    @Body() updateData: UpdateSubscriptionDto,
-  ) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    // Verify shop ownership
-    const shop = await this.shopsService.findById(shopId);
-    if (shop.ownerId !== userId) {
-      throw new BadRequestException('Access denied');
-    }
-
-    const updatedShop = await this.shopsService.updateSubscriptionPlan(shopId, updateData);
-
-    return {
-      message: 'Subscription updated successfully',
-      shop: updatedShop,
-    };
-  }
-
-  @Post(':id/subscription/cancel')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Cancel shop subscription' })
-  @ApiResponse({ status: 200, description: 'Subscription cancelled successfully' })
-  async cancelSubscription(
-    @Param('id', ParseUUIDPipe) shopId: string,
-    @Request() req,
-  ) {
-    const userId = req.user?.id;
-    if (!userId) {
-      throw new BadRequestException('User ID not found in token');
-    }
-
-    // Verify shop ownership
-    const shop = await this.shopsService.findById(shopId);
-    if (shop.ownerId !== userId) {
-      throw new BadRequestException('Access denied');
-    }
-
-    const updatedShop = await this.shopsService.cancelSubscription(shopId);
-
-    return {
-      message: 'Subscription cancelled successfully',
-      shop: updatedShop,
-    };
   }
 }

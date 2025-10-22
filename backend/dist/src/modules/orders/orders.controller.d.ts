@@ -103,6 +103,12 @@ export declare class OrdersController {
         success: boolean;
         data: import("./entities/order.entity").Order;
     }>;
+    createOrderFromCheckoutSession(req: any, body: {
+        sessionId: string;
+    }): Promise<{
+        success: boolean;
+        data: import("./entities/order.entity").Order;
+    }>;
     getOrderTracking(orderNumber: string, email: string): Promise<{
         success: boolean;
         data: {

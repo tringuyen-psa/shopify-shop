@@ -1,3 +1,3 @@
 export declare class CreatePaymentDto {
-    paymentMethod: 'stripe';
+    paymentMethod: 'stripe_popup' | 'paypal' | 'stripe_card';
 }

@@ -614,4 +614,86 @@ export class OrdersService {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
   }
+
+  /**
+   * Create order from checkout session after successful payment
+   */
+  async createOrderFromCheckoutSession(checkoutSessionId: string): Promise<Order> {
+    // Get checkout session with all relations
+    const checkoutSession = await this.checkoutSessionRepository.findOne({
+      where: { sessionId: checkoutSessionId },
+      relations: ['product', 'product.shop', 'customer']
+    });
+
+    if (!checkoutSession) {
+      throw new NotFoundException('Checkout session not found');
+    }
+
+    // Check if order already exists for this session
+    const existingOrder = await this.orderRepository.findOne({
+      where: { checkoutSessionId: checkoutSession.id }
+    });
+
+    if (existingOrder) {
+      console.log('Order already exists for checkout session:', checkoutSessionId);
+      return existingOrder;
+    }
+
+    console.log('Creating order from checkout session:', checkoutSessionId);
+
+    // Calculate platform fee (15%)
+    const platformFeePercent = 15;
+    const platformFee = this.calculatePlatformFee(
+      typeof checkoutSession.totalAmount === 'string'
+        ? parseFloat(checkoutSession.totalAmount)
+        : checkoutSession.totalAmount,
+      platformFeePercent
+    );
+
+    const totalAmount = typeof checkoutSession.totalAmount === 'string'
+      ? parseFloat(checkoutSession.totalAmount)
+      : checkoutSession.totalAmount;
+
+    const shopRevenue = totalAmount - platformFee;
+
+    // Create order data
+    const createOrderDto = {
+      shopId: checkoutSession.product.shop.id,
+      productId: checkoutSession.product.id,
+      customerId: null, // checkoutSession doesn't have customer field, using null for now
+      checkoutSessionId: checkoutSession.id,
+      customerEmail: checkoutSession.email,
+      customerName: checkoutSession.customerName,
+      customerPhone: checkoutSession.phone,
+      shippingAddressLine1: checkoutSession.shippingAddressLine1,
+      shippingAddressLine2: checkoutSession.shippingAddressLine2,
+      platformFeePercent: 15.0, // Default platform fee
+      shippingCity: checkoutSession.shippingCity,
+      shippingState: checkoutSession.shippingState,
+      shippingCountry: checkoutSession.shippingCountry,
+      shippingPostalCode: checkoutSession.shippingPostalCode,
+      shippingMethodName: checkoutSession.shippingMethodName,
+      shippingCost: checkoutSession.shippingCost || 0,
+      productPrice: checkoutSession.productPrice,
+      totalAmount: totalAmount,
+      billingCycle: checkoutSession.billingCycle,
+      paymentMethod: 'stripe',
+      paymentIntentId: checkoutSession.stripePaymentIntentId || checkoutSession.stripeCheckoutSessionId,
+      paymentStatus: 'paid',
+      fulfillmentStatus: 'unfulfilled',
+      platformFee: platformFee,
+      shopRevenue: shopRevenue,
+      customerNote: checkoutSession.customerNote,
+      paidAt: new Date().toISOString(),
+      items: [{
+        productId: checkoutSession.product.id,
+        productName: checkoutSession.product.name,
+        productPrice: checkoutSession.productPrice,
+        quantity: 1,
+        totalPrice: checkoutSession.productPrice
+      }]
+    };
+
+    return await this.create(createOrderDto);
+  }
 }

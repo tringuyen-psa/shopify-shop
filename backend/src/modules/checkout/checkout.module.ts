@@ -6,6 +6,7 @@ import { CheckoutService } from './checkout.service';
 import { CheckoutController } from './checkout.controller';
 import { ProductsModule } from '../products/products.module';
 import { ShippingModule } from '../shipping/shipping.module';
+import { OrdersModule } from '../orders/orders.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ShippingModule } from '../shipping/shipping.module';
     ConfigModule,
     ProductsModule,
     ShippingModule,
+    OrdersModule,
   ],
   controllers: [CheckoutController],
   providers: [CheckoutService],

@@ -119,7 +119,7 @@ export const shopsApi = {
     return response.data;
   },
 
-  async getMyShop(): Promise<Shop> {
+  async getMyShop(): Promise<Shop[]> {
     const response = await api.get('/shops/my');
     return response.data;
   },
@@ -165,11 +165,17 @@ export const shopsApi = {
   },
 
   async startOnboarding(shopId: string): Promise<{ onboardingUrl: string; accountId: string }> {
+    if (!shopId || shopId === 'undefined' || shopId === 'null') {
+      throw new Error('Invalid shop ID provided');
+    }
     const response = await api.post(`/shops/${shopId}/connect/onboard`);
     return response.data;
   },
 
   async createKYCLink(shopId: string): Promise<{ kycUrl: string; accountId: string }> {
+    if (!shopId || shopId === 'undefined' || shopId === 'null') {
+      throw new Error('Invalid shop ID provided');
+    }
     const response = await api.post(`/shops/${shopId}/connect/kyc`);
     return response.data;
   },
@@ -190,6 +196,9 @@ export const shopsApi = {
   },
 
   async getDashboardLink(shopId: string): Promise<{ dashboardUrl: string }> {
+    if (!shopId || shopId === 'undefined' || shopId === 'null') {
+      throw new Error('Invalid shop ID provided');
+    }
     const response = await api.get(`/shops/${shopId}/connect/dashboard`);
     return response.data;
   },

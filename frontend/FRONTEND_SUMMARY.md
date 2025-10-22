@@ -56,6 +56,7 @@ frontend/src/
 ## 🚀 Features đã triển khai
 
 ### ✅ Authentication System
+
 - **Login/Register pages** cho cả Customer và Shop Owner
 - **JWT token management** với refresh token
 - **Role-based routing** với middleware protection
@@ -63,12 +64,14 @@ frontend/src/
 - **Auto-redirect** theo role sau login
 
 ### ✅ Homepage
+
 - **Modern design** với hero section và features
 - **Authentication state** aware header
 - **Call-to-action** buttons cho registration
 - **Responsive design** với Tailwind CSS
 
 ### ✅ Shop Owner Dashboard
+
 - **Complete sidebar navigation** với mobile responsive
 - **Dashboard overview** với stats cards
 - **KYC onboarding flow** tích hợp Stripe Connect
@@ -76,6 +79,7 @@ frontend/src/
 - **Real-time status** cho shop verification
 
 ### ✅ Customer Dashboard
+
 - **Personal dashboard** với order và subscription tracking
 - **Order history** với status indicators
 - **Subscription management** interface
@@ -83,6 +87,7 @@ frontend/src/
 - **Mobile-friendly** sidebar navigation
 
 ### ✅ Admin Dashboard
+
 - **Platform-wide analytics** và statistics
 - **Shop management** với approval workflow
 - **Revenue tracking** với platform fees
@@ -90,6 +95,7 @@ frontend/src/
 - **Dark theme** admin interface
 
 ### ✅ Checkout Flow Foundation
+
 - **3-step checkout structure** đã được thiết kế
 - **Checkout layout** với order summary
 - **Information step** component
@@ -117,6 +123,7 @@ frontend/src/
 ## 🔐 Route Protection
 
 Các routes được bảo vệ bởi middleware:
+
 - `/admin/*` - Chỉ `platform_admin`
 - `/dashboard/shop/*` - `shop_owner` và `platform_admin`
 - `/dashboard/customer/*` - Chỉ `customer`
@@ -125,7 +132,8 @@ Các routes được bảo vệ bởi middleware:
 ## 🎯 Ready for Backend Integration
 
 Frontend đã sẵn sàng để kết nối với backend:
-- **API endpoints** đã được định nghĩa trong `lib/api/`
+
+- **API endpoints** đã được định nghĩa trong `lib`
 - **TypeScript interfaces** cho tất cả data models
 - **Error handling** patterns đã được thiết lập
 - **Authentication flow** hoàn chỉnh
@@ -134,6 +142,7 @@ Frontend đã sẵn sàng để kết nối với backend:
 ## 🚦 Next Steps
 
 Để hoàn thành toàn bộ hệ thống:
+
 1. **Backend API** implementation (NestJS)
 2. **Database setup** (PostgreSQL)
 3. **Stripe Connect** integration
