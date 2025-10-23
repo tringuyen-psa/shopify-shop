@@ -201,11 +201,30 @@ export class ShopsService {
       throw new BadRequestException('Shop not found');
     }
 
+    // Calculate end date based on period
+    const startDate = new Date();
+    let endDate = new Date(startDate);
+
+    if (planData.period === 'tháng' || planData.period === 'monthly') {
+      // Add exactly 1 month to handle varying month lengths properly
+      endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
+    } else if (planData.period === 'năm' || planData.period === 'yearly') {
+      // Add exactly 1 year
+      endDate = new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate());
+    } else if (planData.period === 'tuần' || planData.period === 'weekly') {
+      // Add 7 days
+      endDate.setDate(endDate.getDate() + 7);
+    } else {
+      // Default to 1 month if period is unrecognized
+      endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate());
+    }
+
     const updateData: Partial<Shop> = {
       subscriptionPlan: planData.plan,
       subscriptionPrice: planData.price,
       subscriptionPeriod: planData.period,
-      subscriptionStartsAt: new Date(),
+      subscriptionStartsAt: startDate,
+      subscriptionEndsAt: endDate,
       subscriptionActive: true,
       stripeSubscriptionId: planData.stripeSubscriptionId || null,
     };

@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -23,16 +25,26 @@ export default function HomePage() {
             tất cả trong một nền tảng. Phí chỉ 15% trên mỗi giao dịch.
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link href="/register">
-              <Button size="lg" className="text-lg px-8 py-3">
-                Bắt đầu ngay
-              </Button>
-            </Link>
-            <Link href="/shops">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-3">
-                Khám phá shops
-              </Button>
-            </Link>
+            {user ? (
+              <Link href="/shops">
+                <Button size="lg" className="text-lg px-8 py-3">
+                  Khám phá shops
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/register">
+                  <Button size="lg" className="text-lg px-8 py-3">
+                    Bắt đầu ngay
+                  </Button>
+                </Link>
+                <Link href="/shops">
+                  <Button variant="outline" size="lg" className="text-lg px-8 py-3">
+                    Khám phá shops
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -115,14 +127,17 @@ export default function HomePage() {
         <div className="mt-20 text-center">
           <div className="bg-blue-600 rounded-2xl p-12 text-white">
             <h2 className="text-3xl font-bold mb-4">
-              Sẵn sàng bắt đầu bán hàng?
+              {user ? 'Khám phá thêm nhiều shop' : 'Sẵn sàng bắt đầu bán hàng?'}
             </h2>
             <p className="text-xl mb-8 text-blue-100">
-              Đăng ký ngay hôm nay và nhận 30 ngày miễn phí platform fee
+              {user
+                ? 'Tiếp tục khám phá các shop tuyệt vời trên nền tảng của chúng tôi'
+                : 'Đăng ký ngay hôm nay và nhận 30 ngày miễn phí platform fee'
+              }
             </p>
-            <Link href="/register/shop-owner">
+            <Link href={user ? "/shops" : "/register/shop-owner"}>
               <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
-                Mở Shop Miễn Phí
+                {user ? 'Khám phá shops' : 'Mở Shop Miễn Phí'}
               </Button>
             </Link>
           </div>

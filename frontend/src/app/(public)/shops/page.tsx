@@ -253,11 +253,13 @@ export default function ShopsPage() {
       <div className="bg-blue-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-4">Want to Start Your Own Shop?</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              {user ? 'Ready to Start Your Own Shop?' : 'Want to Start Your Own Shop?'}
+            </h2>
             <p className="text-xl mb-8">Join our marketplace and start selling to customers worldwide.</p>
-            <Link href="/register/shop-owner">
+            <Link href={user ? "/dashboard/shop/create" : "/register/shop-owner"}>
               <Button size="lg" variant="secondary">
-                Create Your Shop
+                {user ? 'Create Your Shop' : 'Get Started'}
               </Button>
             </Link>
           </div>
