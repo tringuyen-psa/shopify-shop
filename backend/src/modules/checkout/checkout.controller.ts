@@ -5,11 +5,11 @@ import {
   Patch,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   NotFoundException,
   BadRequestException,
-  Inject,
 } from '@nestjs/common';
 import { CheckoutService } from './checkout.service';
 import { OrdersService } from '../orders/orders.service';
@@ -248,6 +248,49 @@ export class CheckoutController {
         message: 'Session status updated successfully',
       };
     } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  @Get('orders/confirm')
+  @ApiOperation({ summary: 'Confirm order and show confirmation page (public)' })
+  @ApiParam({ name: 'session_id', description: 'Stripe checkout session ID' })
+  @ApiResponse({ status: 200, description: 'Order confirmation data retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Session not found or expired' })
+  async confirmOrder(@Query('session_id') sessionId: string) {
+    try {
+      // Find checkout session by Stripe session ID
+      const checkoutSession = await this.checkoutService.findByStripeSessionId(sessionId);
+
+      if (!checkoutSession) {
+        throw new NotFoundException('Checkout session not found');
+      }
+
+      // Always try to create order (will handle idempotency in service)
+      try {
+        const order = await this.ordersService.createOrderFromCheckoutSession(checkoutSession.sessionId);
+        console.log('Order created successfully:', order.orderNumber);
+
+        return {
+          success: true,
+          data: {
+            orderNumber: order.orderNumber,
+            customerEmail: order.customerEmail,
+            totalAmount: order.totalAmount,
+            paymentStatus: order.paymentStatus,
+            fulfillmentStatus: order.fulfillmentStatus,
+            createdAt: order.createdAt,
+            customerName: order.customerName,
+          },
+        };
+      } catch (orderError) {
+        console.error('Failed to create order from checkout session:', orderError);
+        throw new BadRequestException('Failed to create order from checkout session');
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(error.message);
     }
   }

@@ -85,6 +85,12 @@ export default function ShopOwnerLayout({
                         </div>
 
                         <div className="ml-4 flex items-center md:ml-6">
+                            <Link href="/" className="mr-4">
+                                <Button variant="outline" size="sm">
+                                    <Home className="h-4 w-4 mr-2" />
+                                    Home
+                                </Button>
+                            </Link>
                             <div className="text-sm text-gray-700 mr-4">
                                 Welcome, {user?.name}
                             </div>

@@ -116,4 +116,8 @@ export class CreateProductDto {
   @IsArray()
   @IsString({ each: true })
   features?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
