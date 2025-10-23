@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fix font loading issues */
+@layer base {
+  /* Ensure fonts load properly */
+  html {
+    font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Prevent flash of unstyled text */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
 /* Fix for browser extension hydration mismatches */
 html[class*="mdl-"] {
   /* Reset any styles that browser extensions might apply */

@@ -36,6 +36,9 @@ let AuthController = class AuthController {
     async getCurrentUser(req) {
         return this.authService.getCurrentUser(req.user.id);
     }
+    async logout() {
+        return this.authService.logout();
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -83,6 +86,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getCurrentUser", null);
+__decorate([
+    (0, common_1.Post)('logout'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Logout user' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Logout successful' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('auth'),
     (0, common_1.Controller)('auth'),

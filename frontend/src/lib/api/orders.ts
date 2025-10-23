@@ -113,34 +113,35 @@ export const ordersApi = {
 
   async getOrder(orderNumber: string): Promise<Order> {
     const response = await api.get(`/orders/${orderNumber}`);
-    return response.data;
+    return response.data.data;
   },
 
   // Shop owner orders
   async getShopOrders(shopId: string, params?: OrdersQueryParams): Promise<{ orders: Order[], total: number, page: number, limit: number }> {
-    const response = await api.get(`/shops/${shopId}/orders`, { params });
-    return response.data;
+    const response = await api.get(`/orders/shop/${shopId}`, { params });
+    // Backend returns { success: true, data: result }
+    return response.data.data;
   },
 
   // Order management (shop owner)
   async fulfillOrder(orderId: string, data: FulfillOrderRequest): Promise<Order> {
     const response = await api.put(`/orders/${orderId}/fulfill`, data);
-    return response.data;
+    return response.data.data;
   },
 
   async shipOrder(orderId: string, data: FulfillOrderRequest): Promise<Order> {
     const response = await api.put(`/orders/${orderId}/ship`, data);
-    return response.data;
+    return response.data.data;
   },
 
   async cancelOrder(orderId: string, reason?: string): Promise<Order> {
     const response = await api.put(`/orders/${orderId}/cancel`, { reason });
-    return response.data;
+    return response.data.data;
   },
 
   async updateInternalNote(orderId: string, note: string): Promise<Order> {
     const response = await api.put(`/orders/${orderId}/note`, { internalNote: note });
-    return response.data;
+    return response.data.data;
   },
 
   // Admin orders

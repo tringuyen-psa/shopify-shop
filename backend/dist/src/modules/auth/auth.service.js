@@ -120,6 +120,11 @@ let AuthService = class AuthService {
         }
         return this.sanitizeUser(user);
     }
+    async logout() {
+        return {
+            message: 'Logout successful. Please remove your access tokens from client storage.',
+        };
+    }
     sanitizeUser(user) {
         const { passwordHash, ...result } = user;
         return result;

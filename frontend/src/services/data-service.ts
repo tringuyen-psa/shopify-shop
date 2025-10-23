@@ -122,13 +122,27 @@ class DataService {
       if (shopId === "current") {
         try {
           const myShop = await this.getMyShop();
-          if (!myShop || !myShop.id) {
+          if (!myShop || !myShop.slug) {
             throw new Error("User does not have a shop");
           }
-          shopId = myShop.id; // Use ID instead of slug for backend API
+          shopId = myShop.slug; // Use slug instead of ID for backend API
         } catch (shopError) {
           console.error("Failed to get user shop:", shopError);
           throw new Error("User does not have a shop or shop access denied");
+        }
+      }
+
+      // If it looks like a UUID, try to get the shop by ID first to get the slug
+      if (shopId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        try {
+          // Try to get shop by ID to find its slug
+          const shops = await shopsApi.getAllShops({ limit: 100 });
+          const shop = shops.shops.find(s => s.id === shopId);
+          if (shop && shop.slug) {
+            shopId = shop.slug;
+          }
+        } catch (error) {
+          console.warn("Could not convert shop ID to slug, trying with ID:", error);
         }
       }
 

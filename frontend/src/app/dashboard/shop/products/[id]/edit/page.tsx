@@ -43,7 +43,7 @@ export default function EditProductPage() {
     const fetchProduct = async () => {
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch(`products/${productId}`, {
+            const response = await fetch(`/api/products/${productId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -54,8 +54,10 @@ export default function EditProductPage() {
             }
 
             const productData = await response.json();
+            console.log('Loaded product data:', productData);
             setProduct(productData);
-            setFormData({
+
+            const formDataInit = {
                 name: productData.name || '',
                 description: productData.description || '',
                 basePrice: productData.basePrice?.toString() || '',
@@ -66,7 +68,11 @@ export default function EditProductPage() {
                 trackInventory: productData.trackInventory !== false,
                 inventoryQuantity: productData.inventoryQuantity || 0,
                 requiresShipping: productData.requiresShipping !== false,
-            });
+            };
+
+            console.log('Initial form data:', formDataInit);
+            console.log('Initial name:', JSON.stringify(formDataInit.name));
+            setFormData(formDataInit);
         } catch (error) {
             console.error('Error fetching product:', error);
         } finally {
@@ -79,6 +85,13 @@ export default function EditProductPage() {
         setSaving(true);
 
         try {
+            // Basic validation
+            if (!formData.basePrice || parseFloat(formData.basePrice) <= 0) {
+                alert('Base price must be greater than 0');
+                setSaving(false);
+                return;
+            }
+
             const token = localStorage.getItem('accessToken');
             const submitData = {
                 ...formData,
@@ -86,7 +99,11 @@ export default function EditProductPage() {
                 tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
             };
 
-            const response = await fetch(`products/${productId}`, {
+            console.log('Submitting data:', submitData);
+            console.log('Name length:', formData.name?.length || 0);
+            console.log('Name value:', JSON.stringify(formData.name));
+
+            const response = await fetch(`/api/products/${productId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -96,7 +113,15 @@ export default function EditProductPage() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update product');
+                const errorData = await response.json();
+                if (errorData.message && Array.isArray(errorData.message)) {
+                    // Handle validation errors
+                    const errorMessages = errorData.message.join(', ');
+                    alert(`Validation errors: ${errorMessages}`);
+                } else {
+                    throw new Error(errorData.message || 'Failed to update product');
+                }
+                return;
             }
 
             router.push('/dashboard/shop/products');
@@ -109,6 +134,9 @@ export default function EditProductPage() {
     };
 
     const handleInputChange = (field: string, value: any) => {
+        if (field === 'name') {
+            console.log('Name change:', JSON.stringify(value), 'Length:', value?.length || 0);
+        }
         setFormData(prev => ({
             ...prev,
             [field]: value
@@ -168,8 +196,12 @@ export default function EditProductPage() {
                                     value={formData.name}
                                     onChange={(e) => handleInputChange('name', e.target.value)}
                                     required
-                                    placeholder="Enter product name"
+                                    placeholder="Enter product name (minimum 2 characters)"
+                                    minLength={2}
                                 />
+                                {formData.name && formData.name.length > 0 && formData.name.length < 2 && (
+                                    <p className="text-sm text-red-600 mt-1">Product name must be at least 2 characters long</p>
+                                )}
                             </div>
 
                             <div>

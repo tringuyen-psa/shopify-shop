@@ -16,12 +16,10 @@ class CreateProductDto {
 exports.CreateProductDto = CreateProductDto;
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Min)(2),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Min)(2),
     __metadata("design:type", String)
 ], CreateProductDto.prototype, "slug", void 0);
 __decorate([

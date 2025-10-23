@@ -28,6 +28,8 @@ export declare class ShopsController {
     update(id: string, updateShopDto: UpdateShopDto, req: any): Promise<import("./entities/shop.entity").Shop>;
     remove(id: string, req: any): Promise<void>;
     subscribe(id: string, updateSubscriptionDto: UpdateSubscriptionDto, req: any): Promise<import("./entities/shop.entity").Shop>;
+    updateSubscription(id: string, updateSubscriptionDto: UpdateSubscriptionDto, req: any): Promise<import("./entities/shop.entity").Shop>;
+    cancelSubscription(id: string, req: any): Promise<import("./entities/shop.entity").Shop>;
     startOnboarding(shopId: string, req: any): Promise<{
         message: string;
         onboardingUrl: string;

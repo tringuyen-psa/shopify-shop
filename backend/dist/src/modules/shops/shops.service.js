@@ -22,10 +22,14 @@ let ShopsService = class ShopsService {
         this.shopRepository = shopRepository;
     }
     async findById(id) {
-        return this.shopRepository.findOne({
+        const shop = await this.shopRepository.findOne({
             where: { id },
-            relations: ['owner', 'products'],
+            relations: ['products'],
         });
+        if (!shop) {
+            throw new common_1.NotFoundException('Shop not found');
+        }
+        return shop;
     }
     async findBySlug(slug) {
         return this.shopRepository.findOne({

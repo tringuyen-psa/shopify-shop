@@ -105,15 +105,7 @@ export class ShopsController {
     try {
       console.log(`Finding shop with identifier: ${id}`);
 
-      // First try to find by UUID
-      const shopById = await this.shopsService.findById(id);
-      console.log('Shop found by ID:', shopById?.id || 'not found');
-
-      if (shopById) {
-        return this.productsService.findByShopId(id);
-      }
-
-      // If not found, try to find by slug
+      // Try to find by slug first (this seems to work more reliably)
       console.log('Trying to find by slug...');
       const shopBySlug = await this.shopsService.findBySlug(id);
       console.log('Shop found by slug:', shopBySlug?.id || 'not found');
@@ -122,11 +114,28 @@ export class ShopsController {
         return this.productsService.findByShopId(shopBySlug.id);
       }
 
+      // If not found by slug, try to find by UUID
+      console.log('Trying to find by ID...');
+      try {
+        const shopById = await this.shopsService.findById(id);
+        console.log('Shop found by ID:', shopById?.id || 'not found');
+
+        if (shopById) {
+          return this.productsService.findByShopId(shopById.id);
+        }
+      } catch (idError) {
+        console.log('ID lookup failed:', idError.message);
+      }
+
+      // If neither method worked, throw 404
       throw new NotFoundException('Shop not found');
     } catch (error) {
       console.error('Error finding shop by ID/slug:', error);
-      // Re-throw the original error instead of masking it
-      throw error;
+      // Only re-throw NotFoundException, other errors become 400
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to find shop: ' + error.message);
     }
   }
 
@@ -204,6 +213,39 @@ export class ShopsController {
     @Request() req,
   ) {
     return this.shopsService.updateSubscriptionPlan(id, updateSubscriptionDto);
+  }
+
+  @Post(':id/subscription/update')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update shop subscription plan' })
+  @ApiParam({ name: 'id', description: 'Shop ID' })
+  @ApiResponse({ status: 200, description: 'Subscription updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can update subscription' })
+  @ApiResponse({ status: 404, description: 'Shop not found' })
+  updateSubscription(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSubscriptionDto: UpdateSubscriptionDto,
+    @Request() req,
+  ) {
+    return this.shopsService.updateSubscriptionPlan(id, updateSubscriptionDto);
+  }
+
+  @Post(':id/subscription/cancel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel shop subscription' })
+  @ApiParam({ name: 'id', description: 'Shop ID' })
+  @ApiResponse({ status: 200, description: 'Subscription cancelled successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Only shop owner can cancel subscription' })
+  @ApiResponse({ status: 404, description: 'Shop not found' })
+  cancelSubscription(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req,
+  ) {
+    return this.shopsService.cancelSubscription(id);
   }
 
   // TODO: Implement analytics service method

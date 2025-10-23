@@ -53,6 +53,7 @@ export default function ShopOrdersPage() {
 
       // Get shop info
       const shopData = await dataService.getMyShop();
+      console.log('Shop data loaded:', shopData);
       setShop(shopData);
 
       // Prepare query params
@@ -69,9 +70,16 @@ export default function ShopOrdersPage() {
       setTotal(ordersData.total);
     } catch (error) {
       console.error('Failed to load orders:', error);
-      // If no shop found, redirect to onboarding
-      if (error instanceof Error && error.message.includes('404')) {
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error details:', error);
+
+      // Only redirect to onboarding if user specifically doesn't have a shop
+      if (error instanceof Error && error.message.includes('User does not have a shop')) {
+        console.log('Redirecting to onboarding - user does not have a shop');
         router.push('/dashboard/shop/onboarding');
+      } else {
+        // For other errors, don't redirect - just show error state
+        console.log('Not redirecting - this is not a "no shop" error');
       }
     } finally {
       setLoading(false);

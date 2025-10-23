@@ -48,4 +48,12 @@ export class AuthController {
   async getCurrentUser(@Request() req) {
     return this.authService.getCurrentUser(req.user.id);
   }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({ status: 200, description: 'Logout successful' })
+  async logout() {
+    return this.authService.logout();
+  }
 }

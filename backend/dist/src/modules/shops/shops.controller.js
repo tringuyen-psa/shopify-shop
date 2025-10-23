@@ -58,22 +58,31 @@ let ShopsController = class ShopsController {
     async findProductsById(id) {
         try {
             console.log(`Finding shop with identifier: ${id}`);
-            const shopById = await this.shopsService.findById(id);
-            console.log('Shop found by ID:', shopById?.id || 'not found');
-            if (shopById) {
-                return this.productsService.findByShopId(id);
-            }
             console.log('Trying to find by slug...');
             const shopBySlug = await this.shopsService.findBySlug(id);
             console.log('Shop found by slug:', shopBySlug?.id || 'not found');
             if (shopBySlug) {
                 return this.productsService.findByShopId(shopBySlug.id);
             }
+            console.log('Trying to find by ID...');
+            try {
+                const shopById = await this.shopsService.findById(id);
+                console.log('Shop found by ID:', shopById?.id || 'not found');
+                if (shopById) {
+                    return this.productsService.findByShopId(shopById.id);
+                }
+            }
+            catch (idError) {
+                console.log('ID lookup failed:', idError.message);
+            }
             throw new common_1.NotFoundException('Shop not found');
         }
         catch (error) {
             console.error('Error finding shop by ID/slug:', error);
-            throw error;
+            if (error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException('Failed to find shop: ' + error.message);
         }
     }
     async createProduct(shopId, createProductDto, req) {
@@ -90,6 +99,12 @@ let ShopsController = class ShopsController {
     }
     subscribe(id, updateSubscriptionDto, req) {
         return this.shopsService.updateSubscriptionPlan(id, updateSubscriptionDto);
+    }
+    updateSubscription(id, updateSubscriptionDto, req) {
+        return this.shopsService.updateSubscriptionPlan(id, updateSubscriptionDto);
+    }
+    cancelSubscription(id, req) {
+        return this.shopsService.cancelSubscription(id);
     }
     async startOnboarding(shopId, req) {
         const userId = req.user?.id;
@@ -272,6 +287,39 @@ __decorate([
     __metadata("design:paramtypes", [String, update_subscription_dto_1.UpdateSubscriptionDto, Object]),
     __metadata("design:returntype", void 0)
 ], ShopsController.prototype, "subscribe", null);
+__decorate([
+    (0, common_1.Post)(':id/subscription/update'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Update shop subscription plan' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Shop ID' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Subscription updated successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Forbidden - Only shop owner can update subscription' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Shop not found' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_subscription_dto_1.UpdateSubscriptionDto, Object]),
+    __metadata("design:returntype", void 0)
+], ShopsController.prototype, "updateSubscription", null);
+__decorate([
+    (0, common_1.Post)(':id/subscription/cancel'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Cancel shop subscription' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Shop ID' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Subscription cancelled successfully' }),
+    (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Forbidden - Only shop owner can cancel subscription' }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Shop not found' }),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ShopsController.prototype, "cancelSubscription", null);
 __decorate([
     (0, common_1.Post)(':id/connect/onboard'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

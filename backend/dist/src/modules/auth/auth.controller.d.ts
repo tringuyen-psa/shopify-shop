@@ -21,4 +21,7 @@ export declare class AuthController {
         user: Omit<import("../users/entities/user.entity").User, "passwordHash">;
     }>;
     getCurrentUser(req: any): Promise<Omit<import("../users/entities/user.entity").User, "passwordHash">>;
+    logout(): Promise<{
+        message: string;
+    }>;
 }

@@ -22,6 +22,7 @@ interface Product {
 }
 
 interface CheckoutSession {
+    sessionId: string;
     product: Product;
     shippingCost?: number;
     totalAmount?: number;
@@ -100,7 +101,7 @@ function StripeCardForm({
             }
 
             // Create payment intent on our backend
-            const response = await fetch('create-payment-intent', {
+            const response = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -113,9 +114,10 @@ function StripeCardForm({
                 }),
             });
 
-            const paymentIntentData = await response.json();
+              const paymentIntentData = await response.json();
 
             if (!response.ok) {
+                console.error('Payment intent API error:', paymentIntentData);
                 throw new Error(paymentIntentData.error || 'Failed to create payment');
             }
 

@@ -159,8 +159,18 @@ export default function ShopSubscriptions() {
     async function fetchShopData() {
         try {
             setFetchingShop(true);
-            const shopData = await shopsApi.getMyShop();
-            setShop(shopData);
+            const shopData: any = await shopsApi.getMyShop();
+            // getMyShop returns an array, so we'll take the first shop
+            // or handle multiple shops if needed
+            if (Array.isArray(shopData) && shopData.length > 0) {
+                setShop(shopData[0]);
+            } else if (shopData && typeof shopData === 'object') {
+                // Handle case where API might return a single object
+                setShop(shopData);
+            } else {
+                console.error('No shop data found');
+                toast.error('No shop found. Please create a shop first.');
+            }
         } catch (error) {
             console.error('Failed to fetch shop data:', error);
             toast.error('Failed to load shop information');
@@ -170,7 +180,17 @@ export default function ShopSubscriptions() {
     }
 
     async function handleUpgradePlan(tierId: string) {
-        if (!shop) return;
+        if (!shop) {
+            toast.error('No shop found. Please create a shop first.');
+            return;
+        }
+
+        // Validate shop ID
+        if (!shop.id || shop.id === 'undefined' || shop.id === 'null') {
+            toast.error('Invalid shop ID. Please refresh the page and try again.');
+            console.error('Invalid shop ID:', shop.id);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -179,6 +199,13 @@ export default function ShopSubscriptions() {
                 toast.error('Invalid plan selected');
                 return;
             }
+
+            console.log('Updating subscription for shop ID:', shop.id);
+            console.log('Plan data:', {
+                plan: tierId,
+                price: selectedTier.price,
+                period: selectedTier.period,
+            });
 
             await shopsApi.updateSubscription(shop.id, {
                 plan: tierId as 'basic' | 'shopify' | 'advanced' | 'shopify_plus',
@@ -197,7 +224,17 @@ export default function ShopSubscriptions() {
     }
 
     async function handleCancelSubscription() {
-        if (!shop) return;
+        if (!shop) {
+            toast.error('No shop found. Please create a shop first.');
+            return;
+        }
+
+        // Validate shop ID
+        if (!shop.id || shop.id === 'undefined' || shop.id === 'null') {
+            toast.error('Invalid shop ID. Please refresh the page and try again.');
+            console.error('Invalid shop ID:', shop.id);
+            return;
+        }
 
         if (!confirm('Are you sure you want to cancel your subscription? This will take effect at the end of your current billing period.')) {
             return;
@@ -205,6 +242,7 @@ export default function ShopSubscriptions() {
 
         setLoading(true);
         try {
+            console.log('Cancelling subscription for shop ID:', shop.id);
             await shopsApi.cancelSubscription(shop.id);
             toast.success('Subscription cancelled successfully');
             await fetchShopData(); // Refresh shop data
@@ -352,10 +390,10 @@ export default function ShopSubscriptions() {
                                 {/* CTA Button */}
                                 <Button
                                     className={`w-full ${isCurrentPlan
-                                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            : tier.recommended
-                                                ? 'bg-green-600 hover:bg-green-700 text-white'
-                                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        : tier.recommended
+                                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                                            : 'bg-blue-600 hover:bg-blue-700 text-white'
                                         }`}
                                     disabled={isCurrentPlan || loading}
                                     onClick={() => handleUpgradePlan(tier.id)}

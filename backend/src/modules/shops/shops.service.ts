@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like } from 'typeorm';
 import { Shop } from './entities/shop.entity';
@@ -20,10 +20,16 @@ export class ShopsService {
   ) {}
 
   async findById(id: string): Promise<Shop> {
-    return this.shopRepository.findOne({
+    const shop = await this.shopRepository.findOne({
       where: { id },
-      relations: ['owner', 'products'],
+      relations: ['products'],
     });
+
+    if (!shop) {
+      throw new NotFoundException('Shop not found');
+    }
+
+    return shop;
   }
 
   async findBySlug(slug: string): Promise<Shop> {

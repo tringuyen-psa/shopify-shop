@@ -12,11 +12,9 @@ import { Type } from 'class-transformer';
 
 export class CreateProductDto {
   @IsString()
-  @Min(2)
   name: string;
 
   @IsString()
-  @Min(2)
   slug: string;
 
   @IsOptional()

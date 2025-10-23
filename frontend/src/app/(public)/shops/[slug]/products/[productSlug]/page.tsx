@@ -72,7 +72,7 @@ export default function ProductPage({ params }: ProductPageProps) {
             if (!product) return;
 
             // Create checkout session
-            const response = await fetch('checkout', {
+            const response = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -84,8 +84,9 @@ export default function ProductPage({ params }: ProductPageProps) {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create checkout session');
+                const errorText = await response.text();
+                console.error('API Response Error:', errorText);
+                throw new Error(`API Error: ${response.status} - ${errorText.substring(0, 100)}`);
             }
 
             const result = await response.json();
@@ -94,9 +95,11 @@ export default function ProductPage({ params }: ProductPageProps) {
                 throw new Error('No session ID returned from checkout API');
             }
 
+            console.log('Checkout session created:', result.sessionId);
+
             // Redirect to checkout
             window.location.href = `/checkout/${result.sessionId}`;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Express checkout error:', error);
             alert(`Failed to start checkout: ${error.message}. Please try again.`);
         }
@@ -313,8 +316,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                                                     {product.yearlyPrice && product.monthlyPrice && (
                                                         <div className="mt-2 text-sm text-green-600 font-medium">
                                                             Save ${(
-                                                                (parseFloat(product.monthlyPrice || '0') * 12 - parseFloat(product.yearlyPrice || '0'))
-                                                            ).toFixed(2)} annually
+                                                                ((parseFloat(product.monthlyPrice || '0') * 12) - parseFloat(product.yearlyPrice || '0')).toFixed(2)
+                                                            ).toString()} annually
                                                         </div>
                                                     )}
                                                 </div>

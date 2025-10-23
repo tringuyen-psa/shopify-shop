@@ -35,7 +35,7 @@ export default function CreateShopPage() {
 
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('shops', {
+            const response = await fetch('/api/shops', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

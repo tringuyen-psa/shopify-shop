@@ -17,7 +17,7 @@ export default function KycTestPage() {
 
         try {
             // Gọi API để lấy details từ Stripe
-            const response = await fetch('stripe-connect/check-kyc', {
+            const response = await fetch('/api/stripe-connect/check-kyc', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export default function KycTestPage() {
             setResult(data);
 
             console.log('KYC Check Result:', data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('KYC Check Error:', error);
             setResult({
                 success: false,
@@ -48,7 +48,7 @@ export default function KycTestPage() {
         }
 
         try {
-            const response = await fetch('stripe-connect/onboarding-complete', {
+            const response = await fetch('/api/stripe-connect/onboarding-complete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ export default function KycTestPage() {
             const data = await response.json();
             console.log('Activate Shop Result:', data);
             alert('Đã kích hoạt shop thành công!');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Activate Shop Error:', error);
             alert('Lỗi khi kích hoạt shop: ' + error.message);
         }
@@ -136,7 +136,7 @@ export default function KycTestPage() {
                                             <div>
                                                 <strong>Requirements:</strong>
                                                 <ul className="list-disc list-inside ml-4 mt-2">
-                                                    {result.requirements.map((req: any, index) => (
+                                                    {result.requirements.map((req: any, index: any) => (
                                                         <li key={index} className="text-sm">{req}</li>
                                                     ))}
                                                 </ul>

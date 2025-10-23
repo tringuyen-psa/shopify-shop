@@ -47,7 +47,7 @@ export default function ProductsPage() {
             if (!confirm('Are you sure you want to delete this product?')) {
                 throw new Error('User cancelled');
             }
-            const response = await fetch(`products/${productId}`, {
+            const response = await fetch(`/api/products/${productId}`, {
                 method: 'DELETE'
             });
             if (!response.ok) {

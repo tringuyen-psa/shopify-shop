@@ -30,5 +30,8 @@ export declare class AuthService {
         user: Omit<User, "passwordHash">;
     }>;
     getCurrentUser(userId: string): Promise<Omit<User, 'passwordHash'>>;
+    logout(): Promise<{
+        message: string;
+    }>;
     private sanitizeUser;
 }

@@ -149,6 +149,15 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
+  async logout(): Promise<{ message: string }> {
+    // For JWT tokens, logout is primarily handled on the client side
+    // by removing the tokens from storage
+    // We could implement a token blacklist here if needed
+    return {
+      message: 'Logout successful. Please remove your access tokens from client storage.',
+    };
+  }
+
   private sanitizeUser(user: User): Omit<User, 'passwordHash'> {
     const { passwordHash, ...result } = user;
     return result as Omit<User, 'passwordHash'>;
